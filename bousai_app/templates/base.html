@@ -4,31 +4,122 @@
   <meta charset="utf-8">
   <title>{% block title %}防災アプリ{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root { --blue: #2458a6; --ink: #204c91; --white: #fff; --surface: #f4f7fb; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--surface);
+      color: #555;
+      font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+    }
+    .site-header {
+      height: 68px;
+      background: linear-gradient(110deg, #163d7a, #2e6ac2);
+      color: var(--white);
+    }
+    .header-inner {
+      height: 68px;
+      padding: 0 max(24px, calc((100% - 1075px) / 2));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      color: var(--white);
+      font-size: 21px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .left-tabs { display: flex; flex-direction: column; gap: 10px; left: 0; position: fixed; top: 144px; z-index: 10; }
+    .left-tab {
+      align-items: center;
+      background: #fff;
+      border: 1px solid #d8e1ed;
+      border-left: 0;
+      border-radius: 0 12px 12px 0;
+      box-shadow: 0 5px 18px rgba(29, 67, 111, .14);
+      color: var(--white);
+      display: flex;
+      font-size: 16px;
+      font-weight: 700;
+      justify-content: center;
+      min-height: 66px;
+      padding: 13px 16px;
+      text-decoration: none;
+      width: 148px;
+    }
+    .left-tab:first-child { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .left-tab:last-child { color: var(--ink); }
+    .left-tab:hover, .left-tab:focus { transform: translateX(3px); }
+    .left-tab:last-child:hover, .left-tab:last-child:focus { background: #eaf1fb; }
+    .menu-button { color: #fff; font-size: 22px; line-height: 1; }
+    .notification-button { align-items: center; background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .45); border-radius: 9px; color: #fff; cursor: pointer; display: flex; gap: 8px; font-size: 14px; padding: 9px 12px; }
+    .notification-button:hover, .notification-button:focus { background: rgba(255, 255, 255, .24); }
+    .notification-count { background: #f05b57; border-radius: 999px; font-size: 12px; line-height: 20px; min-width: 20px; padding: 0 5px; text-align: center; }
+    .notification-toast { background: #fff; border: 1px solid #d6e0ed; border-radius: 12px; bottom: 22px; box-shadow: 0 10px 30px rgba(28, 58, 95, .2); display: none; max-width: 330px; padding: 16px 18px; position: fixed; right: 22px; z-index: 20; }
+    .notification-toast.is-visible { display: block; }
+    .notification-toast strong { color: var(--ink); display: block; margin-bottom: 5px; }
+    .notification-toast a { color: var(--ink); font-weight: 700; }
+    main { min-height: calc(100vh - 68px); }
+    @media (max-width: 600px) { .left-tabs { bottom: 12px; flex-direction: row; left: 12px; top: auto; } .left-tab { border: 1px solid #d8e1ed; border-radius: 10px; min-height: 52px; padding: 10px 12px; width: auto; } .left-tab:first-child { border-color: var(--blue); } .notification-toast { bottom: 84px; left: 12px; right: 12px; } }
+  </style>
 </head>
 <body>
-  <!-- ヘッダー -->
-  <h1>防災アプリ</h1>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/">青森市 防災アプリ</a>
+      <div>
+        <button class="notification-button" id="notificationButton" type="button" aria-label="新着通知">
+          <span aria-hidden="true">🔔</span> 通知 <span class="notification-count" id="notificationCount">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
 
-  <!-- ナビゲーション -->
-  <nav>
-    <a href="/">ホーム</a> |
-    <a href="/shelter_search">避難所検索</a> |
-    <a href="/shelter_register">避難所登録</a> |
-    <a href="/board">指示・発信ボード</a>
-    ｜
-    {% if session.logged_in %}
-      ログイン中{% if session.username %}（{{ session.username }}）{% endif %}
-      <a href="/logout">ログアウト</a>
-    {% else %}
-      未ログイン
-      <a href="/login">ログイン</a>
-    {% endif %}
+  <nav class="left-tabs" aria-label="情報メニュー">
+    <a class="left-tab" href="{{ url_for('damage_info') }}">被害情報</a>
+    <a class="left-tab" href="{{ url_for('materials') }}">届いた資料</a>
   </nav>
-  <hr>
 
   <main>
-    <!-- ここに子テンプレートの content が入る -->
     {% block content %}{% endblock %}
   </main>
+  <div class="notification-toast" id="notificationToast" role="status" aria-live="polite">
+    <strong>新しい住民通報があります</strong>
+    <span id="notificationMessage">届いた資料を確認してください。</span>
+    <a href="{{ url_for('materials') }}">届いた資料を見る</a>
+  </div>
+
+  <script>
+    (function() {
+      const countElement = document.getElementById('notificationCount');
+      const toast = document.getElementById('notificationToast');
+      const button = document.getElementById('notificationButton');
+      let knownCount = Number(localStorage.getItem('residentNotificationCount') || 0);
+
+      function checkNotifications() {
+        fetch('{{ url_for("api_notifications") }}')
+          .then(response => response.json())
+          .then(data => {
+            countElement.textContent = data.count;
+            countElement.hidden = data.count === 0;
+            if (data.count > knownCount && data.latest) {
+              document.getElementById('notificationMessage').textContent = data.latest.title;
+              toast.classList.add('is-visible');
+            }
+            knownCount = data.count;
+            localStorage.setItem('residentNotificationCount', String(knownCount));
+          })
+          .catch(() => {});
+      }
+
+      button.addEventListener('click', function() {
+        toast.classList.toggle('is-visible');
+      });
+      checkNotifications();
+      setInterval(checkNotifications, 30000);
+    }());
+  </script>
 </body>
 </html>

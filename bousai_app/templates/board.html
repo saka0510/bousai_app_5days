@@ -1,25 +1,62 @@
 {% extends "base.html" %}
 
-{% block title %}指示・発信ボード - 防災アプリ{% endblock %}
+{% block title %}被害情報 - 防災アプリ{% endblock %}
 
 {% block content %}
-<h2>発信ボード</h2>
-<p>住民向けの発信を登録・確認できます。</p>
+<style>
+  .damage-shell { margin: 0 auto; max-width: 1080px; padding: 28px 20px 56px; }
+  .damage-shell h2 { color: #2c5bac; margin: 0 0 8px; }
+  .damage-lead { margin: 0 0 22px; }
+  .damage-map { background: #f4f8f7; border: 1px solid #d7e2df; border-radius: 8px; margin-bottom: 24px; overflow: hidden; }
+  .damage-map h3 { font-size: 18px; margin: 0; padding: 16px 18px 12px; }
+  .damage-map-view { display: block; height: 360px; object-fit: cover; width: 100%; }
+  .damage-list { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
+  .damage-card { background: #fff; border: 1px solid #d7e2df; border-radius: 8px; overflow: hidden; }
+  .damage-card-image { aspect-ratio: 16 / 9; display: block; object-fit: cover; width: 100%; }
+  .damage-card-body { padding: 16px; }
+  .damage-card-heading { align-items: center; display: flex; gap: 8px; justify-content: space-between; margin-bottom: 10px; }
+  .damage-card-heading h3 { color: #2c5bac; font-size: 17px; margin: 0; }
+  .damage-source { background: #e8f2ee; border-radius: 999px; color: #28684d; font-size: 12px; padding: 4px 8px; white-space: nowrap; }
+  .damage-card p { line-height: 1.65; margin: 6px 0; }
+  .damage-location { color: #364b52; font-weight: 700; }
+  .damage-coordinates, .damage-time { color: #68777b; font-size: 13px; }
+  .street-view-link { color: #2c5bac; display: inline-block; font-size: 13px; font-weight: 700; margin-top: 5px; }
+  @media (max-width: 600px) { .damage-shell { padding: 20px 12px 40px; } .damage-card-heading { align-items: flex-start; flex-direction: column; } }
+</style>
 
-<!-- 発信一覧 -->
-<h3>発信一覧</h3>
-{% if instructions %}
-<table border="1" cellpadding="5">
-  <tr>
-    <th>内容</th>
-  </tr>
-  {% for inst in instructions %}
-  <tr>
-    <td>{{ inst.content }}{% if inst.shelter %}（避難先: {{ inst.shelter }}）{% endif %}</td>
-  </tr>
-  {% endfor %}
-</table>
-{% else %}
-<p>登録されている指示はありません。</p>
-{% endif %}
+<div class="damage-shell">
+  <h2>被害情報</h2>
+  <p class="damage-lead">住民からの通報や自治体から提供された情報を、位置と画像で確認できます。</p>
+
+  <section class="damage-map" aria-labelledby="damage-map-title">
+    <h3 id="damage-map-title">情報提供地点マップ</h3>
+    <img class="damage-map-view" src="{{ url_for('static', filename='damage-map.svg') }}" alt="住民通報と自治体提供情報の地点を示した地図">
+  </section>
+
+  <section aria-labelledby="damage-list-title">
+    <h3 id="damage-list-title">受信した被害情報</h3>
+    {% if damage_reports %}
+    <div class="damage-list">
+      {% for report in damage_reports %}
+      <article class="damage-card">
+        <img class="damage-card-image" src="{{ url_for('static', filename=report.image) }}" alt="{{ report.content }}">
+        <div class="damage-card-body">
+          <div class="damage-card-heading">
+            <h3>{{ report.location }}</h3>
+            <span class="damage-source">{{ report.source }}</span>
+          </div>
+          <p>{{ report.content }}</p>
+          <p class="damage-coordinates">緯度 {{ report.latitude }} / 経度 {{ report.longitude }}</p>
+          <p class="damage-time">受信日時: {{ report.reported_at }}</p>
+          <a class="street-view-link" href="https://www.openstreetmap.org/?mlat={{ report.latitude }}&mlon={{ report.longitude }}#map=18/{{ report.latitude }}/{{ report.longitude }}" target="_blank" rel="noopener">地点を詳しく見る ↗</a>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p>現在、被害情報はありません。</p>
+    {% endif %}
+  </section>
+</div>
+
 {% endblock %}

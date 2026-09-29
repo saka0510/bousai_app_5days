@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title">
+  <title id="title">A fallen tree blocking a road</title>
+  <rect width="640" height="360" fill="#dbe8ec"/>
+  <rect y="228" width="640" height="132" fill="#59676b"/>
+  <path d="M0 298 L640 258" stroke="#e4c75b" stroke-width="8" stroke-dasharray="38 30"/>
+  <path d="M95 260 C188 215 310 260 390 218 S535 207 640 170" fill="none" stroke="#57412f" stroke-width="30" stroke-linecap="round"/>
+  <path d="M90 255 C176 195 266 229 347 192 M147 254 L116 174 M205 242 L186 153 M280 226 L282 140" fill="none" stroke="#765333" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="92" cy="245" r="47" fill="#3e7652"/><circle cx="160" cy="206" r="49" fill="#4d8758"/><circle cx="240" cy="189" r="50" fill="#3e7652"/><circle cx="319" cy="177" r="44" fill="#4d8758"/>
+  <rect x="22" y="22" width="255" height="48" rx="6" fill="#fff" opacity=".92"/>
+  <text x="40" y="53" font-family="sans-serif" font-size="22" fill="#35474d">Road obstruction</text>
+</svg>

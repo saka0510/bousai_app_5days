@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title">
+  <title id="title">A landslide beside a closed road</title>
+  <rect width="640" height="360" fill="#cfe3ef"/>
+  <path d="M0 275 L0 150 L170 80 L380 120 L640 70 L640 275Z" fill="#6f9164"/>
+  <path d="M0 275 L640 235 L640 360 L0 360Z" fill="#5b686e"/>
+  <path d="M0 312 L640 270" stroke="#e4c75b" stroke-width="8" stroke-dasharray="38 30"/>
+  <path d="M250 112 L410 215 L342 253 L210 145Z" fill="#8c694d"/>
+  <path d="M280 131 L429 223" stroke="#b8855b" stroke-width="20"/>
+  <rect x="468" y="170" width="24" height="88" fill="#d85445"/>
+  <path d="M438 170 H522 L480 112Z" fill="#d85445"/>
+  <path d="M450 184 H510" stroke="#fff" stroke-width="8"/>
+  <rect x="22" y="22" width="235" height="48" rx="6" fill="#fff" opacity=".92"/>
+  <text x="40" y="53" font-family="sans-serif" font-size="22" fill="#35474d">Landslide area</text>
+</svg>

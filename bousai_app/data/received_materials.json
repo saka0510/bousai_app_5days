@@ -1,0 +1,18 @@
+[
+  {
+    "id": 201,
+    "title": "中央1丁目 倒木被害の現場写真",
+    "sender": "住民通報",
+    "received_at": "2026年09月29日 09:18",
+    "summary": "道路をふさいでいる倒木の状況写真です。",
+    "image": "damage-road.svg"
+  },
+  {
+    "id": 202,
+    "title": "山手地区 斜面崩落の状況資料",
+    "sender": "青森市 防災課",
+    "received_at": "2026年09月29日 10:02",
+    "summary": "斜面崩落と周辺道路の通行止めに関する現地確認資料です。",
+    "image": "damage-landslide.svg"
+  }
+]

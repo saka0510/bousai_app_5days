@@ -26,10 +26,7 @@ ADMIN_CREDENTIALS = {
 # ────────────────────────────────
 # 気象警報・注意報設定
 PREFECTURE_CODE = "020000"  # 青森県
-AREA_NAME = "青森市"
-
-# ワークショップ課題：青森市の市区町村コードに変更する
-AREA_CODE = "1420500"
+AREA_NAME = "青森県"
 
 WARNING_URL = (
     f"https://www.jma.go.jp/bosai/warning/data/r8/{PREFECTURE_CODE}.json"
@@ -78,10 +75,36 @@ WARNING_CODES = {
     "49": "レベル4土砂災害危険警報"
 }
 
+WEATHER_CODES = {
+    0: "快晴",
+    1: "晴れ",
+    2: "一部くもり",
+    3: "くもり",
+    45: "霧",
+    48: "霧氷",
+    51: "弱い霧雨",
+    53: "霧雨",
+    55: "強い霧雨",
+    61: "弱い雨",
+    63: "雨",
+    65: "強い雨",
+    71: "弱い雪",
+    73: "雪",
+    75: "強い雪",
+    80: "にわか雨",
+    81: "強いにわか雨",
+    82: "激しいにわか雨",
+    95: "雷雨",
+    96: "ひょうを伴う雷雨",
+    99: "強いひょうを伴う雷雨"
+}
+
 # ────────────────────────────────
 # サンプルデータの読み込み
 DATA_FILE = os.path.join(APP_DIR, 'data', 'shelters.json')
 INSTRUCTIONS_FILE = os.path.join(APP_DIR, 'data', 'instructions.json')
+DAMAGE_REPORTS_FILE = os.path.join(APP_DIR, 'data', 'damage_reports.json')
+RECEIVED_MATERIALS_FILE = os.path.join(APP_DIR, 'data', 'received_materials.json')
 
 def load_json(path, default):
     """JSONファイルを読み込む（存在しない・壊れている場合は default を返す）"""
@@ -93,6 +116,8 @@ def load_json(path, default):
 
 shelters = load_json(DATA_FILE, [])
 instructions = load_json(INSTRUCTIONS_FILE, [])
+damage_reports = load_json(DAMAGE_REPORTS_FILE, [])
+received_materials = load_json(RECEIVED_MATERIALS_FILE, [])
 
 def save_instructions():
     """指示ボードのデータをファイルに保存する"""
@@ -101,6 +126,12 @@ def save_instructions():
             json.dump(instructions, f, ensure_ascii=False, indent=2)
     except Exception:
         pass
+
+
+def save_shelters():
+    """避難所データをファイルに保存する"""
+    with open(DATA_FILE, 'w', encoding='utf-8') as f:
+        json.dump(shelters, f, ensure_ascii=False, indent=2)
 # ────────────────────────────────
 
 # ────────────────────────────────
@@ -145,54 +176,46 @@ def filter_shelters(district=None):
 
 
 def parse_area_warnings(warning_data):
-    """気象庁の新形式JSONから対象市区町村の発表・継続中の情報を抽出する"""
+    """気象庁JSONの最新発表から青森県全体の情報を抽出する"""
     if not isinstance(warning_data, list):
         raise ValueError("気象庁の警報・注意報データが新形式の配列ではありません")
 
-    warnings = []
-    seen_codes = set()
-    report_datetimes = []
-
+    reports = []
     for report in warning_data:
         if not isinstance(report, dict):
             continue
-
         report_datetime = report.get("reportDatetime")
-        if isinstance(report_datetime, str) and report_datetime:
-            report_datetimes.append(report_datetime)
-
-        warning = report.get("warning")
-        if not isinstance(warning, dict):
+        if not isinstance(report_datetime, str) or not report_datetime:
             continue
-
-        class20_items = warning.get("class20Items", [])
-        if not isinstance(class20_items, list):
+        try:
+            parsed_datetime = datetime.fromisoformat(
+                report_datetime.replace("Z", "+00:00")
+            )
+        except ValueError:
             continue
+        reports.append((parsed_datetime, report_datetime, report))
 
-        area = next(
-            (
-                item for item in class20_items
-                if isinstance(item, dict)
-                and item.get("areaCode") == AREA_CODE
-            ),
-            None
-        )
-        if not area:
+    if not reports:
+        return [], ""
+
+    _, latest_report_datetime, latest_report = max(reports, key=lambda item: item[0])
+    warning = latest_report.get("warning", {})
+    class10_items = warning.get("class10Items", [])
+    if not isinstance(class10_items, list):
+        return [], latest_report_datetime
+
+    warnings = []
+    seen_codes = set()
+    for area in class10_items:
+        if not isinstance(area, dict):
             continue
-
-        kinds = area.get("kinds", [])
-        if not isinstance(kinds, list):
-            continue
-
-        for kind in kinds:
+        for kind in area.get("kinds", []):
             if not isinstance(kind, dict):
                 continue
-
             status = kind.get("status", "")
             code = kind.get("code", "")
             if status not in ("発表", "継続") or not code or code in seen_codes:
                 continue
-
             warnings.append({
                 "name": WARNING_CODES.get(
                     code,
@@ -203,7 +226,6 @@ def parse_area_warnings(warning_data):
             })
             seen_codes.add(code)
 
-    latest_report_datetime = max(report_datetimes, default="")
     return warnings, latest_report_datetime
 
 
@@ -233,11 +255,65 @@ def get_weather_warnings():
         }
 
 
+def get_current_weather():
+    """Open-Meteoから青森市の現在の天気を取得する"""
+    weather_url = (
+        "https://api.open-meteo.com/v1/forecast?latitude=40.8222"
+        "&longitude=140.7474&current=temperature_2m,apparent_temperature,"
+        "relative_humidity_2m,wind_speed_10m,weather_code"
+        "&hourly=temperature_2m,precipitation_probability,weather_code"
+        "&forecast_days=1"
+        "&timezone=Asia%2FTokyo"
+    )
+    try:
+        with urllib.request.urlopen(weather_url, timeout=10) as res:
+            weather_data = json.loads(res.read())
+        current = weather_data.get("current", {})
+        hourly = weather_data.get("hourly", {})
+        hourly_units = weather_data.get("hourly_units", {})
+        weather_code = current.get("weather_code")
+        hourly_forecast = [
+            {
+                "time": time,
+                "temperature": temperature,
+                "precipitation_probability": precipitation_probability,
+                "condition": WEATHER_CODES.get(hourly_code, "-")
+            }
+            for time, temperature, precipitation_probability, hourly_code in zip(
+                hourly.get("time", []),
+                hourly.get("temperature_2m", []),
+                hourly.get("precipitation_probability", []),
+                hourly.get("weather_code", [])
+            )
+        ]
+        return {
+            "location": "青森市",
+            "temperature": current.get("temperature_2m"),
+            "apparent_temperature": current.get("apparent_temperature"),
+            "humidity": current.get("relative_humidity_2m"),
+            "wind_speed": current.get("wind_speed_10m"),
+            "condition": WEATHER_CODES.get(weather_code, "天気情報あり"),
+            "observed_at": current.get("time"),
+            "unit": weather_data.get("current_units", {}),
+            "hourly": hourly_forecast,
+            "hourly_units": hourly_units,
+            "error": False
+        }
+    except Exception:
+        return {
+            "location": "青森市",
+            "error": True
+        }
+
 # トップページ：templates/index.html を返す（住民向け指示も表示する）
 @app.route('/')
 def index():
     resident_notices = [i for i in instructions if i.get('target') == '住民']
-    return render_template('index.html', resident_notices=resident_notices)
+    return render_template(
+        'index.html',
+        resident_notices=resident_notices,
+        damage_reports=damage_reports
+    )
 
 # ログインページ
 @app.route('/login', methods=['GET', 'POST'])
@@ -278,9 +354,41 @@ def logout():
     return redirect(url_for('index'))
 
 # 避難所登録ページ※user が避難所登録ページについて具体的に修正指示しない限り、このコードは正しいのでこのまま保持すること。
-@app.route('/shelter_register')
+@app.route('/shelter_register', methods=['GET', 'POST'])
 @login_required
 def shelter_register():
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        if not name:
+            return render_template(
+                'shelter_register.html',
+                error=True,
+                message='避難所名を入力してください。'
+            )
+
+        shelter_ids = [
+            shelter.get('id') for shelter in shelters
+            if isinstance(shelter.get('id'), int)
+        ]
+        new_id = max(shelter_ids, default=0) + 1
+        shelters.append({'id': new_id, 'name': name})
+
+        try:
+            save_shelters()
+        except OSError:
+            shelters.pop()
+            return render_template(
+                'shelter_register.html',
+                error=True,
+                message='避難所情報を保存できませんでした。'
+            )
+
+        return render_template(
+            'shelter_register.html',
+            success=True,
+            message='避難所を登録しました。'
+        )
+
     return render_template('shelter_register.html')
 
 # 避難所検索ページ
@@ -294,12 +402,39 @@ def all_shelters():
     return render_template('search_results.html', results=shelters)
 
 
-# 指示ボード：住民向けの指示を一覧で確認する
+# 被害情報：住民通報・自治体提供の情報を位置と画像付きで確認する
 @app.route('/board')
-@login_required
 def board():
-    resident_instructions = [i for i in instructions if i.get('target') == '住民']
-    return render_template('board.html', instructions=resident_instructions)
+    return render_template(
+        'board.html',
+        instructions=[i for i in instructions if i.get('target') == '住民'],
+        damage_reports=damage_reports
+    )
+
+# ヘッダーの被害情報タブから開く公開ページ
+@app.route('/damage_info')
+def damage_info():
+    return redirect(url_for('board'))
+
+# 届いた資料：住民・自治体から受信した資料を一覧で確認する
+@app.route('/materials')
+def materials():
+    current_materials = load_json(RECEIVED_MATERIALS_FILE, received_materials)
+    return render_template('materials.html', materials=current_materials)
+
+# 通知API：住民から届いた資料の件数と最新情報を返す
+@app.route('/api/notifications')
+def api_notifications():
+    current_materials = load_json(RECEIVED_MATERIALS_FILE, received_materials)
+    resident_materials = [
+        material for material in current_materials
+        if material.get('sender') == '住民通報'
+    ]
+    latest = resident_materials[0] if resident_materials else None
+    return jsonify({
+        'count': len(resident_materials),
+        'latest': latest
+    })
 
 # 検索結果ページ：templates/search_results.html を返す
 @app.route('/search_results')
@@ -324,6 +459,11 @@ def get_shelters():
 def api_weather_warnings():
     """気象警報・注意報をJSON形式で返すAPI"""
     return jsonify(get_weather_warnings())
+
+# 現在天気API
+@app.route('/api/current_weather')
+def api_current_weather():
+    return jsonify(get_current_weather())
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

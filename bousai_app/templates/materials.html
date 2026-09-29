@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}届いた資料 - 防災アプリ{% endblock %}
+
+{% block content %}
+<style>
+  .materials-shell { margin: 0 auto; max-width: 1080px; padding: 28px 20px 56px; }
+  .materials-shell h2 { color: #2c5bac; margin: 0 0 8px; }
+  .materials-lead { margin: 0 0 22px; }
+  .materials-list { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
+  .material-card { background: #fff; border: 1px solid #d7e2df; border-radius: 8px; overflow: hidden; }
+  .material-image { aspect-ratio: 16 / 9; display: block; object-fit: cover; width: 100%; }
+  .material-body { padding: 16px; }
+  .material-heading { align-items: flex-start; display: flex; gap: 8px; justify-content: space-between; }
+  .material-heading h3 { color: #2c5bac; font-size: 17px; margin: 0; }
+  .material-sender { background: #e8f2ee; border-radius: 999px; color: #28684d; font-size: 12px; padding: 4px 8px; white-space: nowrap; }
+  .material-body p { line-height: 1.65; margin: 10px 0 0; }
+  .material-time { color: #68777b; font-size: 13px; }
+  @media (max-width: 600px) { .materials-shell { padding: 20px 12px 40px; } .material-heading { flex-direction: column; } }
+</style>
+
+<div class="materials-shell">
+  <h2>届いた資料</h2>
+  <p class="materials-lead">住民や自治体から届いた被害状況の写真・資料を確認できます。</p>
+
+  {% if materials %}
+  <div class="materials-list">
+    {% for material in materials %}
+    <article class="material-card">
+      <img class="material-image" src="{{ url_for('static', filename=material.image) }}" alt="{{ material.title }}">
+      <div class="material-body">
+        <div class="material-heading">
+          <h3>{{ material.title }}</h3>
+          <span class="material-sender">{{ material.sender }}</span>
+        </div>
+        <p>{{ material.summary }}</p>
+        <p class="material-time">受信日時: {{ material.received_at }}</p>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p>届いた資料はありません。</p>
+  {% endif %}
+</div>
+{% endblock %}

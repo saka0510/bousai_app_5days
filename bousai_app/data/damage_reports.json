@@ -1,0 +1,22 @@
+[
+  {
+    "id": 101,
+    "source": "住民通報",
+    "content": "道路に倒木があり、車両が通行できません。",
+    "location": "青森市中央1丁目付近",
+    "latitude": 40.8222,
+    "longitude": 140.7474,
+    "reported_at": "2026年09月29日 09:18",
+    "image": "damage-road.svg"
+  },
+  {
+    "id": 102,
+    "source": "自治体提供",
+    "content": "大雨により斜面の一部が崩落しています。周辺道路は通行止めです。",
+    "location": "青森市山手地区",
+    "latitude": 40.8158,
+    "longitude": 140.7351,
+    "reported_at": "2026年09月29日 10:02",
+    "image": "damage-landslide.svg"
+  }
+]
