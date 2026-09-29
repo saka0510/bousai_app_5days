@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}受付が見つかりません - 防災アプリ{% endblock %}
+{% block content %}
+<main style="margin:48px auto;max-width:700px;padding:20px;color:#263c3b"><h1 style="color:#174d48;font-size:22px">受付が見つかりません</h1><p>指定された災害報告は存在しないか、削除されています。</p><a href="{{ url_for('disaster_operations') }}">災害対応一覧へ戻る</a></main>
+{% endblock %}

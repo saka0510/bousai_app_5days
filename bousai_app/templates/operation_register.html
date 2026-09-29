@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}住民通報を登録 - 防災アプリ{% endblock %}
+{% block content %}
+<style>
+  .ops-shell { margin: 0 24px 0 max(168px, calc((100% - 900px) / 2)); max-width: 900px; padding: 26px 0 52px; color: #263c3b; }
+  .ops-button { background: #17685f; border: 1px solid #17685f; border-radius: 4px; color: #fff; cursor: pointer; display: inline-flex; font: inherit; font-weight: 700; min-height: 40px; padding: 8px 14px; text-decoration: none; }
+  .ops-button.secondary { background: #fff; color: #17685f; }.ops-shell a:focus-visible, .ops-shell button:focus-visible, .ops-shell input:focus-visible, .ops-shell select:focus-visible, .ops-shell textarea:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+  .ops-back { color: #17685f; display: inline-block; font-weight: 700; margin-bottom: 14px; }
+  .ops-form { background: #fff; border: 1px solid #d8e4e0; border-radius: 5px; padding: 20px; }
+  .ops-form h1 { color: #174d48; font-size: 24px; margin: 0 0 18px; }
+  .ops-fields { display: grid; gap: 14px 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ops-field { display: grid; gap: 6px; min-width: 0; }.ops-field.full { grid-column: 1 / -1; }
+  .ops-field label { color: #445b58; font-size: 13px; font-weight: 700; }.ops-field label span { color: #a32925; font-size: 11px; margin-left: 5px; }
+  .ops-field input, .ops-field select, .ops-field textarea { background: #fff; border: 1px solid #bfcfca; border-radius: 3px; color: #263c3b; font: inherit; min-height: 40px; min-width: 0; padding: 8px 10px; width: 100%; }
+  .ops-field textarea { min-height: 130px; resize: vertical; }.ops-help { color: #71817e; font-size: 12px; margin: 0; }
+  .ops-error { background: #fff0ee; border: 1px solid #e9b9b4; border-radius: 4px; color: #912b25; margin-bottom: 16px; padding: 11px 13px; }
+  .ops-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+  @media (max-width: 600px) { .ops-shell { margin: 0 12px; padding: 18px 0 88px; }.ops-form { padding: 14px; }.ops-form h1 { font-size: 21px; }.ops-fields { grid-template-columns: 1fr; }.ops-field.full { grid-column: auto; } }
+</style>
+<div class="ops-shell">
+  <a class="ops-back" href="{{ url_for('disaster_operations') }}">← 一覧に戻る</a>
+  <form class="ops-form" method="post" enctype="multipart/form-data">
+    <h1>住民通報を登録</h1>
+    {% if error %}<div class="ops-error" role="alert">{{ error }}</div>{% endif %}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="ops-fields">
+      <div class="ops-field"><label for="source">受付方法<span>必須</span></label><select id="source" name="source" required>{% for option in sources %}<option value="{{ option }}" {% if values.get('source', '電話') == option %}selected{% endif %}>{{ option }}</option>{% endfor %}</select></div>
+      <div class="ops-field"><label for="priority">重要度<span>必須</span></label><select id="priority" name="priority" required>{% for option in priorities %}<option value="{{ option }}" {% if values.get('priority', '中') == option %}selected{% endif %}>{{ option }}</option>{% endfor %}</select></div>
+      <div class="ops-field"><label for="risk">危険の種類<span>必須</span></label><select id="risk" name="risk" required>{% for option in risks %}<option value="{{ option }}" {% if values.get('risk', 'その他') == option %}selected{% endif %}>{{ option }}</option>{% endfor %}</select></div>
+      <div class="ops-field"><label for="reporter_type">報告元<span>必須</span></label><select id="reporter_type" name="reporter_type" required>{% for option in reporter_types %}<option value="{{ option }}" {% if values.get('reporter_type', '住民') == option %}selected{% endif %}>{{ option }}</option>{% endfor %}</select></div>
+      <div class="ops-field"><label for="reporter">通報者</label><input id="reporter" name="reporter" value="{{ values.get('reporter', '') }}" maxlength="120" placeholder="空欄の場合は匿名"></div>
+      <div class="ops-field"><label for="title">案件名<span>必須</span></label><input id="title" name="title" value="{{ values.get('title', '') }}" maxlength="160" required></div>
+      <div class="ops-field full"><label for="location">場所<span>必須</span></label><input id="location" name="location" value="{{ values.get('location', '') }}" maxlength="240" required></div>
+      <div class="ops-field full"><label for="details">通報内容・チャット本文<span>必須</span></label><textarea id="details" name="details" maxlength="10000" required>{{ values.get('details', '') }}</textarea></div>
+      <div class="ops-field full"><label for="attachments">現場画像</label><input id="attachments" name="attachments" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple><p class="ops-help">JPG、JPEG、PNG、WebP。1枚5MB以下、最大4枚。受付方法が「画像」の場合は1枚以上必要です。</p></div>
+    </div>
+    <div class="ops-actions"><button class="ops-button" type="submit">受付を登録</button><a class="ops-button secondary" href="{{ url_for('disaster_operations') }}">キャンセル</a></div>
+  </form>
+</div>
+{% endblock %}

@@ -17,6 +17,7 @@
     "latitude": 40.8158,
     "longitude": 140.7351,
     "reported_at": "2026年09月29日 10:02",
-    "image": "damage-landslide.svg"
+    "image": "damage-landslide.svg",
+    "verified": true
   }
 ]

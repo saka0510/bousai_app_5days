@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}災害通報整理 - 防災アプリ{% endblock %}
+{% block content %}
+<style>
+  .calls-shell { margin: 0 24px 0 max(168px, calc((100% - 1180px) / 2)); max-width: 1180px; padding: 26px 0 56px; color: #263c3b; }
+  .calls-head { align-items: end; display: flex; gap: 16px; justify-content: space-between; margin-bottom: 18px; }
+  .calls-eyebrow { color: #28746b; font-size: 11px; font-weight: 800; margin: 0 0 5px; }
+  .calls-head h1 { color: #174d48; font-size: 25px; margin: 0 0 5px; }
+  .calls-lead { color: #596d6a; font-size: 13px; margin: 0; }
+  .calls-action { background: #17685f; border: 1px solid #17685f; border-radius: 4px; color: #fff; display: inline-flex; font: inherit; font-weight: 700; min-height: 40px; padding: 9px 13px; text-decoration: none; white-space: nowrap; }
+  .calls-action:hover { background: #0f514a; }.calls-shell a:focus-visible, .calls-shell button:focus-visible, .calls-shell input:focus-visible, .calls-shell select:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+  .calls-stats { display: grid; gap: 9px; grid-template-columns: repeat(6, minmax(0, 1fr)); margin-bottom: 14px; }
+  .calls-stat { background: #fff; border: 1px solid #d8e4e0; border-radius: 5px; min-width: 0; padding: 11px 12px; }.calls-stat span { color: #60716f; display: block; font-size: 11px; line-height: 1.4; }.calls-stat strong { color: #174d48; display: block; font-size: 23px; line-height: 1.3; }
+  .calls-caution { background: #fff9e9; border: 1px solid #ead7a0; border-radius: 4px; color: #604d19; font-size: 12px; line-height: 1.6; margin-bottom: 14px; padding: 10px 12px; }
+  .calls-quick-post { background: #fff; border: 1px solid #cbdcd6; border-radius: 5px; margin-bottom: 14px; padding: 13px; }.calls-quick-post h2 { color: #174d48; font-size: 15px; margin: 0 0 7px; }.calls-quick-post p { color: #60716f; font-size: 12px; line-height: 1.5; margin: 0 0 8px; }.calls-quick-post textarea { background: #fff; border: 1px solid #bfcfca; border-radius: 3px; color: #263c3b; display: block; font: inherit; line-height: 1.55; min-height: 110px; padding: 9px; resize: vertical; width: 100%; }.calls-quick-post textarea:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }.calls-quick-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 9px; }.calls-quick-error { background: #fff0ee; border: 1px solid #e9b9b4; border-radius: 4px; color: #912b25; font-size: 13px; margin-bottom: 9px; padding: 9px 11px; }
+  .calls-filter { background: #fff; border: 1px solid #d8e4e0; border-radius: 5px; margin-bottom: 12px; padding: 12px; }
+  .calls-fields { display: grid; gap: 9px; grid-template-columns: repeat(6, minmax(110px, 1fr)); }
+  .calls-field { display: grid; gap: 4px; min-width: 0; }.calls-field label { color: #52635f; font-size: 11px; font-weight: 700; }.calls-field input, .calls-field select { background: #fff; border: 1px solid #bfcfca; border-radius: 3px; color: #263c3b; font: inherit; min-height: 36px; min-width: 0; padding: 6px 8px; width: 100%; }.calls-keyword { grid-column: span 2; }
+  .calls-checks { align-items: center; display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }.calls-check { align-items: center; color: #405754; display: inline-flex; font-size: 13px; gap: 6px; }.calls-check input { accent-color: #17685f; height: 16px; width: 16px; }
+  .calls-filter-actions { display: flex; gap: 12px; margin-top: 11px; }.calls-filter-actions button { cursor: pointer; }.calls-clear { align-self: center; color: #17685f; font-size: 13px; font-weight: 700; }
+  .calls-count { color: #586a67; font-size: 13px; margin: 11px 0 7px; }.calls-list { display: grid; gap: 8px; }
+  .call-row { background: #fff; border: 1px solid #d8e4e0; border-radius: 5px; color: inherit; display: block; padding: 12px 14px; text-decoration: none; }.call-row:hover, .call-row:focus-visible { background: #f5faf8; border-color: #78a89e; }.call-row-top { align-items: center; display: flex; flex-wrap: wrap; gap: 7px 10px; justify-content: space-between; }.call-row-location { color: #174d48; font-size: 15px; font-weight: 700; }.call-row-meta { color: #6a7976; font-size: 12px; }.call-row-summary { color: #405754; line-height: 1.55; margin: 8px 0 0; overflow-wrap: anywhere; }.call-row-bottom { align-items: center; display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+  .call-pill { border-radius: 999px; display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; }.urgency-high { background: #fde9e7; color: #a32925; }.urgency-medium { background: #fff0d4; color: #80520a; }.urgency-review { background: #edf0ef; color: #53615e; }.review-new { background: #e8f2fb; color: #235d86; }.review-working { background: #fff0d4; color: #80520a; }.review-done { background: #e4f1ed; color: #17685f; }.rescue-yes { background: #fde9e7; color: #a32925; }.rescue-no, .rescue-unknown { background: #edf0ef; color: #53615e; }
+  .calls-empty { background: #fff; border: 1px solid #d8e4e0; border-radius: 5px; color: #687976; padding: 28px; text-align: center; }
+  @media (max-width: 1000px) { .calls-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }.calls-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 600px) { .calls-shell { margin: 0 12px; padding: 18px 0 88px; }.calls-head { align-items: flex-start; flex-direction: column; }.calls-head h1 { font-size: 22px; }.calls-stats { gap: 6px; grid-template-columns: repeat(2, minmax(0, 1fr)); }.calls-stat { padding: 9px; }.calls-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }.calls-keyword { grid-column: span 2; }.calls-filter-actions { align-items: flex-start; flex-direction: column; }.call-row { padding: 11px; } }
+</style>
+<div class="calls-shell">
+  <header class="calls-head"><div><p class="calls-eyebrow">CALL REPORTS / FIRST REVIEW</p><h1>災害通報整理</h1><p class="calls-lead">原文を保持し、確認事項・推測・不明情報を分けて整理します。</p></div><a class="calls-action" href="{{ url_for('call_report_new') }}">通報を整理</a></header>
+  <p class="calls-caution">一次整理の結果です。自動で事実を補完・訂正しません。職員による原文確認と判断を行ってください。緊急度「低」は推測で付与しません。</p>
+  <form class="calls-quick-post" method="post" action="{{ url_for('call_reports_dashboard') }}">
+    <h2>文字起こしをそのまま投稿</h2>
+    <p>貼り付けた原文を改変せず保存します。未入力の項目は「不明」、確認状態は「未確認」で登録し、投稿後に詳細画面で整理できます。</p>
+    {% if quick_error %}<div class="calls-quick-error" role="alert">{{ quick_error }}</div>{% endif %}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label class="calls-field" for="quickTranscript"><span>元の文字起こし</span><textarea id="quickTranscript" name="transcript" maxlength="50000" required>{{ quick_transcript }}</textarea></label>
+    <div class="calls-quick-actions"><button class="calls-action" type="submit">文字起こしをそのまま投稿</button><span class="call-row-meta">投稿後、詳細画面で項目を確認してください。</span></div>
+  </form>
+  <section class="calls-stats" aria-label="通報集計">
+    <div class="calls-stat"><span>総通報件数</span><strong>{{ stats.total }}</strong></div><div class="calls-stat"><span>未確認通報件数</span><strong>{{ stats.unreviewed }}</strong></div><div class="calls-stat"><span>緊急度「高」</span><strong>{{ stats.urgent }}</strong></div><div class="calls-stat"><span>人的被害情報あり</span><strong>{{ stats.human_harm }}</strong></div><div class="calls-stat"><span>救助要請あり</span><strong>{{ stats.rescue }}</strong></div><div class="calls-stat"><span>関連通報グループ</span><strong>{{ stats.related_groups }}</strong></div>
+  </section>
+  <form class="calls-filter" method="get" action="{{ url_for('call_reports_dashboard') }}">
+    <div class="calls-fields">
+      <div class="calls-field"><label for="hazard">災害種別</label><select id="hazard" name="hazard"><option value="">すべて</option>{% for hazard in hazards %}<option value="{{ hazard }}" {% if filters.hazard == hazard %}selected{% endif %}>{{ hazard }}</option>{% endfor %}</select></div>
+      <div class="calls-field"><label for="urgency">緊急度</label><select id="urgency" name="urgency"><option value="">すべて</option>{% for level in urgency_levels %}<option value="{{ level }}" {% if filters.urgency == level %}selected{% endif %}>{{ level }}</option>{% endfor %}</select></div>
+      <div class="calls-field"><label for="area">市区町村・地区</label><select id="area" name="area"><option value="">すべて</option>{% for area in areas %}<option value="{{ area }}" {% if filters.area == area %}selected{% endif %}>{{ area }}</option>{% endfor %}</select></div>
+      <div class="calls-field"><label for="sort">並べ替え</label><select id="sort" name="sort"><option value="registered" {% if filters.sort == 'registered' %}selected{% endif %}>登録時刻順</option><option value="reported" {% if filters.sort == 'reported' %}selected{% endif %}>通報時刻順</option><option value="urgency" {% if filters.sort == 'urgency' %}selected{% endif %}>緊急度順</option></select></div>
+      <div class="calls-field calls-keyword"><label for="q">キーワード</label><input id="q" name="q" type="search" value="{{ filters.q }}" placeholder="通報ID・場所・原文など"></div>
+    </div>
+    <div class="calls-checks"><label class="calls-check"><input type="checkbox" name="rescue" value="1" {% if filters.rescue %}checked{% endif %}>救助要請ありのみ</label><label class="calls-check"><input type="checkbox" name="unreviewed" value="1" {% if filters.unreviewed %}checked{% endif %}>未確認通報のみ</label></div>
+    <div class="calls-filter-actions"><button class="calls-action" type="submit">絞り込む</button><a class="calls-clear" href="{{ url_for('call_reports_dashboard') }}">条件をクリア</a></div>
+  </form>
+  <p class="calls-count">{{ reports|length }}件を表示</p>
+  {% if reports %}<div class="calls-list">
+    {% for report in reports %}
+      {% set urgency_class = {'高':'urgency-high','中':'urgency-medium','要確認':'urgency-review'}.get(report['緊急度']['レベル'], 'urgency-review') %}
+      {% set review_class = {'未確認':'review-new','確認中':'review-working','確認済み':'review-done'}.get(report['管理情報']['確認状態'], 'review-new') %}
+      {% set rescue_class = {'あり':'rescue-yes','なし':'rescue-no','不明':'rescue-unknown'}.get(report['救助要請'], 'rescue-unknown') %}
+      {% set place_parts = [report['場所']['市区町村'], report['場所']['地区・町名']]|reject('equalto', '不明')|list %}
+      <a class="call-row" href="{{ url_for('call_report_detail', system_id=report.system_id) }}">
+        <div class="call-row-top"><span class="call-row-location">{{ place_parts|join(' ') if place_parts else '場所は要確認' }}｜{{ report['災害']['災害種別'] if report['災害']['災害種別'] != '不明' else '災害種別要確認' }}</span><span class="call-row-meta">{% if report['通報日時'] != '不明' %}通報日時: {{ report['通報日時'] }}{% else %}登録日時: {{ report['管理情報']['登録日時'] }}{% endif %}</span></div>
+        <p class="call-row-summary">{{ report['短い要約'] if report['短い要約'] else '要約未記入' }}</p>
+        <div class="call-row-bottom"><span class="call-pill {{ urgency_class }}">緊急度 {{ report['緊急度']['レベル'] }}</span><span class="call-pill {{ rescue_class }}">救助要請 {{ report['救助要請'] if report['救助要請'] != '不明' else '要確認' }}</span><span class="call-pill {{ review_class }}">{{ report['管理情報']['確認状態'] }}</span>{% if report['関連通報']|length > 1 %}<span class="call-pill review-working">関連通報 {{ report['関連通報']|length }}件</span>{% endif %}{% if report['人的被害情報あり'] %}<span class="call-row-meta">人的被害情報あり</span>{% endif %}</div>
+      </a>
+    {% endfor %}
+  </div>{% else %}<div class="calls-empty">条件に一致する通報はありません。</div>{% endif %}
+</div>
+{% endblock %}

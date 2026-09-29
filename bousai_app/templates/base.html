@@ -31,72 +31,136 @@
       font-weight: 700;
       text-decoration: none;
     }
-    .left-tabs { display: flex; flex-direction: column; gap: 10px; left: 0; position: fixed; top: 144px; z-index: 10; }
+    .header-actions { align-items: center; display: flex; gap: 10px; }
+    .auth-status { align-items: center; color: #fff; display: inline-flex; font-size: 12px; gap: 6px; white-space: nowrap; }
+    .auth-status-dot { background: #a9dfb5; border-radius: 50%; height: 8px; width: 8px; }
+    .auth-status.is-logged-out .auth-status-dot { background: #e9c27c; }
+    .auth-username { color: rgba(255,255,255,.82); }
+    .auth-link, .logout-button { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.45); border-radius: 4px; color: #fff; cursor: pointer; display: inline-flex; font: inherit; font-size: 12px; font-weight: 700; min-height: 34px; padding: 7px 9px; text-decoration: none; white-space: nowrap; }
+    .auth-link:hover, .logout-button:hover { background: rgba(255,255,255,.24); }
+    .logout-form { margin: 0; }
+    .auth-link:focus-visible, .logout-button:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+    .left-tabs { background: #fff; border: 1px solid #d8e1ed; border-radius: 5px; box-shadow: 0 5px 18px rgba(29, 67, 111, .14); display: grid; left: 12px; overflow: hidden; position: fixed; top: 126px; width: 224px; z-index: 25; }
+    .left-tabs[hidden] { display: none; }
     .left-tab {
       align-items: center;
       background: #fff;
-      border: 1px solid #d8e1ed;
-      border-left: 0;
-      border-radius: 0 12px 12px 0;
-      box-shadow: 0 5px 18px rgba(29, 67, 111, .14);
-      color: var(--white);
+      border-bottom: 1px solid #e3eae7;
+      color: var(--ink);
       display: flex;
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 700;
-      justify-content: center;
-      min-height: 66px;
-      padding: 13px 16px;
+      min-height: 46px;
+      padding: 10px 14px;
       text-decoration: none;
-      width: 148px;
+      width: 100%;
     }
-    .left-tab:first-child { background: var(--blue); border-color: var(--blue); color: #fff; }
-    .left-tab:last-child { color: var(--ink); }
-    .left-tab:hover, .left-tab:focus { transform: translateX(3px); }
-    .left-tab:last-child:hover, .left-tab:last-child:focus { background: #eaf1fb; }
-    .menu-button { color: #fff; font-size: 22px; line-height: 1; }
+    .left-tab:last-child { border-bottom: 0; }
+    .left-tab.operations-tab { color: #c62828; }
+    .left-tab.call-reports-tab { color: #17685f; }
+    .left-tab.materials-tab { color: var(--ink); }
+    .left-tab:hover, .left-tab:focus-visible { background: #eef5f2; }
+    .menu-button { align-items: center; background: #fff; border: 1px solid #c7d7d1; border-radius: 4px; box-shadow: 0 2px 7px rgba(29, 67, 111, .12); color: #174d48; cursor: pointer; display: flex; height: 42px; justify-content: center; left: 12px; padding: 0; position: fixed; top: 78px; width: 44px; z-index: 26; }
+    .menu-button:hover { background: #eef5f2; }.menu-button:focus-visible, .left-tab:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+    .menu-icon { display: grid; gap: 4px; width: 19px; }.menu-icon span { background: currentColor; border-radius: 2px; display: block; height: 2px; width: 100%; }
     .notification-button { align-items: center; background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .45); border-radius: 9px; color: #fff; cursor: pointer; display: flex; gap: 8px; font-size: 14px; padding: 9px 12px; }
     .notification-button:hover, .notification-button:focus { background: rgba(255, 255, 255, .24); }
     .notification-count { background: #f05b57; border-radius: 999px; font-size: 12px; line-height: 20px; min-width: 20px; padding: 0 5px; text-align: center; }
-    .notification-toast { background: #fff; border: 1px solid #d6e0ed; border-radius: 12px; bottom: 22px; box-shadow: 0 10px 30px rgba(28, 58, 95, .2); display: none; max-width: 330px; padding: 16px 18px; position: fixed; right: 22px; z-index: 20; }
-    .notification-toast.is-visible { display: block; }
-    .notification-toast strong { color: var(--ink); display: block; margin-bottom: 5px; }
-    .notification-toast a { color: var(--ink); font-weight: 700; }
+    .notification-panel { background: #fff; border: 1px solid #d6e0ed; border-radius: 6px; box-shadow: 0 10px 30px rgba(28, 58, 95, .2); max-height: min(70vh, 560px); overflow-y: auto; position: fixed; right: max(16px, calc((100% - 1075px) / 2)); top: 76px; width: min(390px, calc(100vw - 24px)); z-index: 30; }
+    .notification-panel[hidden] { display: none; }
+    .notification-panel-header { align-items: center; background: #f4f7fb; border-bottom: 1px solid #d6e0ed; display: flex; justify-content: space-between; padding: 12px 14px; position: sticky; top: 0; }
+    .notification-panel-header h2 { color: var(--ink); font-size: 16px; margin: 0; }
+    .notification-close { background: transparent; border: 0; color: #40586b; cursor: pointer; font-size: 22px; line-height: 1; padding: 2px 6px; }
+    .notification-close:focus-visible, .notification-button:focus-visible, .notification-item:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+    .notification-list { margin: 0; padding: 0; }
+    .notification-item { border-bottom: 1px solid #e5ebf0; color: #40586b; display: block; padding: 12px 14px; text-decoration: none; }
+    .notification-item:last-child { border-bottom: 0; }
+    .notification-item:hover { background: #f4f7fb; }
+    .notification-item strong { color: var(--ink); display: block; margin-bottom: 4px; }
+    .notification-item-meta { color: #68777b; display: block; font-size: 12px; margin-bottom: 5px; }
+    .notification-item-summary { display: block; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+    .notification-empty { color: #68777b; margin: 0; padding: 20px 14px; text-align: center; }
     main { min-height: calc(100vh - 68px); }
-    @media (max-width: 600px) { .left-tabs { bottom: 12px; flex-direction: row; left: 12px; top: auto; } .left-tab { border: 1px solid #d8e1ed; border-radius: 10px; min-height: 52px; padding: 10px 12px; width: auto; } .left-tab:first-child { border-color: var(--blue); } .notification-toast { bottom: 84px; left: 12px; right: 12px; } }
+    @media (max-width: 700px) { .header-inner { gap: 8px; padding: 0 12px; }.brand { font-size: 16px; white-space: nowrap; }.header-actions { gap: 6px; }.auth-username { display: none; }.auth-status { font-size: 11px; gap: 4px; }.auth-link, .logout-button { font-size: 11px; padding: 6px 7px; }.notification-button { gap: 4px; font-size: 12px; padding: 7px 8px; } }
+    @media (max-width: 390px) { .brand { font-size: 14px; }.header-actions { gap: 4px; }.auth-status { font-size: 10px; }.auth-link, .logout-button { font-size: 10px; padding: 5px 6px; }.notification-button { font-size: 11px; padding: 6px; } }
+    @media (max-width: 600px) { .menu-button { bottom: 12px; left: 12px; top: auto; }.left-tabs { bottom: 66px; left: 12px; max-height: min(60vh, 360px); max-width: calc(100vw - 24px); overflow-y: auto; top: auto; width: 224px; }.left-tab { min-height: 44px; } }
   </style>
 </head>
 <body>
   <header class="site-header">
     <div class="header-inner">
       <a class="brand" href="/">青森市 防災アプリ</a>
-      <div>
-        <button class="notification-button" id="notificationButton" type="button" aria-label="新着通知">
+      <div class="header-actions">
+        {% if session.get('logged_in') %}
+        <span class="auth-status"><span class="auth-status-dot" aria-hidden="true"></span><span>ログイン中</span><span class="auth-username">{{ session.get('username', '管理者') }}</span></span>
+        <form class="logout-form" method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ session.get('logout_csrf_token', '') }}"><button class="logout-button" type="submit">ログアウト</button></form>
+        {% else %}
+        <span class="auth-status is-logged-out"><span class="auth-status-dot" aria-hidden="true"></span><span>未ログイン</span></span>
+        {% if request.endpoint != 'login' %}<a class="auth-link" href="{{ url_for('login', next=request.path) }}">管理者ログイン</a>{% endif %}
+        {% endif %}
+        <button class="notification-button" id="notificationButton" type="button" aria-label="通知一覧を開く" aria-controls="notificationPanel" aria-expanded="false">
           <span aria-hidden="true">🔔</span> 通知 <span class="notification-count" id="notificationCount">0</span>
         </button>
       </div>
     </div>
   </header>
 
-  <nav class="left-tabs" aria-label="情報メニュー">
+  <button class="menu-button" id="menuButton" type="button" aria-label="メニューを開く" aria-controls="mainNavigation" aria-expanded="false" title="メニュー">
+    <span class="menu-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+  </button>
+  <nav class="left-tabs" id="mainNavigation" aria-label="情報メニュー" hidden>
     <a class="left-tab" href="{{ url_for('damage_info') }}">被害情報</a>
-    <a class="left-tab" href="{{ url_for('materials') }}">届いた資料</a>
+    <a class="left-tab operations-tab" href="{{ url_for('disaster_operations') }}">災害対応一覧</a>
+    <a class="left-tab call-reports-tab" href="{{ url_for('call_reports_dashboard') }}">通報整理</a>
+    <a class="left-tab materials-tab" href="{{ url_for('materials') }}">届いた資料</a>
   </nav>
 
   <main>
     {% block content %}{% endblock %}
   </main>
-  <div class="notification-toast" id="notificationToast" role="status" aria-live="polite">
-    <strong>新しい住民通報があります</strong>
-    <span id="notificationMessage">届いた資料を確認してください。</span>
-    <a href="{{ url_for('materials') }}">届いた資料を見る</a>
-  </div>
+  <section class="notification-panel" id="notificationPanel" aria-labelledby="notificationTitle" hidden>
+    <header class="notification-panel-header">
+      <h2 id="notificationTitle">通知一覧</h2>
+      <button class="notification-close" id="notificationClose" type="button" aria-label="通知一覧を閉じる">×</button>
+    </header>
+    <p class="notification-empty" id="notificationEmpty" aria-live="polite">通知はありません。</p>
+    <div class="notification-list" id="notificationList" aria-live="polite"></div>
+  </section>
 
   <script>
     (function() {
       const countElement = document.getElementById('notificationCount');
-      const toast = document.getElementById('notificationToast');
+      const panel = document.getElementById('notificationPanel');
       const button = document.getElementById('notificationButton');
+      const closeButton = document.getElementById('notificationClose');
+      const list = document.getElementById('notificationList');
+      const emptyMessage = document.getElementById('notificationEmpty');
       let knownCount = Number(localStorage.getItem('residentNotificationCount') || 0);
+
+      function setPanelOpen(isOpen) {
+        panel.hidden = !isOpen;
+        button.setAttribute('aria-expanded', String(isOpen));
+      }
+
+      function renderNotifications(notifications) {
+        list.replaceChildren();
+        notifications.forEach(function(notification) {
+          const item = document.createElement('a');
+          const title = document.createElement('strong');
+          const meta = document.createElement('span');
+          const summary = document.createElement('span');
+          item.className = 'notification-item';
+          item.href = '{{ url_for("materials") }}#material-' + encodeURIComponent(String(notification.id));
+          title.textContent = notification.title || 'タイトル未設定';
+          meta.className = 'notification-item-meta';
+          meta.textContent = (notification.sender || '送信元不明') + '　/　' + (notification.received_at || '受信時刻不明');
+          summary.className = 'notification-item-summary';
+          summary.textContent = notification.summary || '内容はありません。';
+          item.append(title, meta, summary);
+          list.appendChild(item);
+        });
+        emptyMessage.hidden = notifications.length > 0;
+      }
 
       function checkNotifications() {
         fetch('{{ url_for("api_notifications") }}')
@@ -104,9 +168,9 @@
           .then(data => {
             countElement.textContent = data.count;
             countElement.hidden = data.count === 0;
-            if (data.count > knownCount && data.latest) {
-              document.getElementById('notificationMessage').textContent = data.latest.title;
-              toast.classList.add('is-visible');
+            renderNotifications(Array.isArray(data.notifications) ? data.notifications : []);
+            if (data.count > knownCount) {
+              setPanelOpen(true);
             }
             knownCount = data.count;
             localStorage.setItem('residentNotificationCount', String(knownCount));
@@ -115,10 +179,47 @@
       }
 
       button.addEventListener('click', function() {
-        toast.classList.toggle('is-visible');
+        setPanelOpen(panel.hidden);
+      });
+      closeButton.addEventListener('click', function() { setPanelOpen(false); });
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && !panel.hidden) {
+          setPanelOpen(false);
+          button.focus();
+        }
       });
       checkNotifications();
       setInterval(checkNotifications, 30000);
+    }());
+  </script>
+  <script>
+    (function() {
+      const menuButton = document.getElementById('menuButton');
+      const navigation = document.getElementById('mainNavigation');
+
+      function setMenuOpen(isOpen) {
+        navigation.hidden = !isOpen;
+        menuButton.setAttribute('aria-expanded', String(isOpen));
+        menuButton.setAttribute('aria-label', isOpen ? 'メニューを閉じる' : 'メニューを開く');
+      }
+
+      menuButton.addEventListener('click', function() {
+        setMenuOpen(navigation.hidden);
+      });
+      navigation.addEventListener('click', function(event) {
+        if (event.target.closest('a')) setMenuOpen(false);
+      });
+      document.addEventListener('click', function(event) {
+        if (!navigation.hidden && !navigation.contains(event.target) && !menuButton.contains(event.target)) {
+          setMenuOpen(false);
+        }
+      });
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && !navigation.hidden) {
+          setMenuOpen(false);
+          menuButton.focus();
+        }
+      });
     }());
   </script>
 </body>

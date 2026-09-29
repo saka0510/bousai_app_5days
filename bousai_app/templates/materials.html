@@ -26,7 +26,7 @@
   {% if materials %}
   <div class="materials-list">
     {% for material in materials %}
-    <article class="material-card">
+    <article class="material-card" id="material-{{ material.id }}">
       <img class="material-image" src="{{ url_for('static', filename=material.image) }}" alt="{{ material.title }}">
       <div class="material-body">
         <div class="material-heading">

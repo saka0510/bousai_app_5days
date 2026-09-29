@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}通報を整理 - 防災アプリ{% endblock %}
+{% block content %}
+<style>
+  .call-form-shell { margin: 0 24px 0 max(168px, calc((100% - 960px) / 2)); max-width: 960px; padding: 24px 0 56px; color: #263c3b; }.call-form-back { color: #17685f; display: inline-block; font-weight: 700; margin-bottom: 12px; }.call-form { background: #fff; border: 1px solid #d8e4e0; border-radius: 5px; padding: 18px; }.call-form h1 { color: #174d48; font-size: 23px; margin: 0 0 7px; }.call-form-intro { color: #586a67; font-size: 13px; line-height: 1.6; margin: 0 0 16px; }.call-form-section { border-top: 1px solid #e0e9e5; margin-top: 18px; padding-top: 14px; }.call-form-section h2 { color: #245750; font-size: 16px; margin: 0 0 11px; }.call-fields { display: grid; gap: 11px 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }.call-field { display: grid; gap: 5px; min-width: 0; }.call-field.full { grid-column: 1 / -1; }.call-field label { color: #445b58; font-size: 12px; font-weight: 700; }.call-field input, .call-field select, .call-field textarea { background: #fff; border: 1px solid #bfcfca; border-radius: 3px; color: #263c3b; font: inherit; min-height: 38px; min-width: 0; padding: 7px 9px; width: 100%; }.call-field textarea { min-height: 88px; resize: vertical; }.call-field textarea.transcript { min-height: 190px; }.call-hint { color: #71817e; font-size: 11px; line-height: 1.5; margin: 0; }.call-confirmed { border-left: 3px solid #287b53; padding-left: 10px; }.call-speculation { border-left: 3px solid #c58a25; padding-left: 10px; }.call-form-warning { background: #fff9e9; border: 1px solid #ead7a0; border-radius: 4px; color: #604d19; font-size: 12px; line-height: 1.6; margin-bottom: 14px; padding: 10px 12px; }.call-form-error { background: #fff0ee; border: 1px solid #e9b9b4; border-radius: 4px; color: #912b25; margin-bottom: 14px; padding: 10px 12px; }.call-form-actions { display: flex; gap: 10px; margin-top: 18px; }.call-submit { background: #17685f; border: 1px solid #17685f; border-radius: 4px; color: #fff; cursor: pointer; font: inherit; font-weight: 700; min-height: 40px; padding: 8px 14px; }.call-cancel { align-self: center; color: #17685f; font-weight: 700; }.call-form a:focus-visible, .call-form button:focus-visible, .call-form input:focus-visible, .call-form select:focus-visible, .call-form textarea:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+  @media (max-width: 600px) { .call-form-shell { margin: 0 12px; padding: 18px 0 88px; }.call-form { padding: 13px; }.call-form h1 { font-size: 21px; }.call-fields { grid-template-columns: 1fr; }.call-field.full { grid-column: auto; }.call-form-actions { align-items: flex-start; flex-direction: column; } }
+</style>
+<div class="call-form-shell"><a class="call-form-back" href="{{ url_for('call_reports_dashboard') }}">← 通報一覧へ戻る</a>
+  <form class="call-form" method="post">
+    <h1>災害通報を整理</h1><p class="call-form-intro">原文の入力にない値は補いません。判断できない項目は空欄のままにしてください。通報日時と登録日時は別々に記録されます。</p>
+    <div class="call-form-warning">この画面は文字起こしから自動で事実を抽出・訂正しません。話者を保って原文を保存し、本人訂正や明確な確認がない認識誤りは元の表現のまま「要確認」として扱ってください。</div>
+    {% if error %}<div class="call-form-error" role="alert">{{ error }}</div>{% endif %}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <section class="call-form-section"><h2>通報と原文</h2><div class="call-fields">
+      <div class="call-field"><label for="report_id">通報ID（入力にある場合）</label><input id="report_id" name="report_id" value="{{ values.get('report_id', '') }}" maxlength="120" placeholder="不明"></div>
+      <div class="call-field"><label for="report_datetime">通報日時（原文にある場合）</label><input id="report_datetime" name="report_datetime" value="{{ values.get('report_datetime', '') }}" maxlength="120" placeholder="不明"></div>
+      <div class="call-field full"><label for="transcript">元の文字起こし</label><textarea class="transcript" id="transcript" name="transcript" maxlength="50000" required>{{ values.get('transcript', '') }}</textarea><p class="call-hint">話者ラベルと本人訂正を含め、受け取った文字起こしをそのまま保存します。</p></div>
+      <div class="call-field full"><label for="short_summary">短い要約（任意）</label><input id="short_summary" name="short_summary" value="{{ values.get('short_summary', '') }}" maxlength="500" placeholder="原文に書かれた内容の範囲で入力"></div>
+    </div></section>
+    <section class="call-form-section"><h2>場所</h2><div class="call-fields">
+      {% for field in place_fields %}<div class="call-field"><label for="place_{{ loop.index0 }}">{{ field }}</label><input id="place_{{ loop.index0 }}" name="place_{{ loop.index0 }}" value="{{ values.get('place_' ~ loop.index0, '') }}" maxlength="240" placeholder="不明"></div>{% endfor %}
+      <div class="call-field"><label for="latitude">地図の緯度（明示された座標のみ）</label><input id="latitude" name="latitude" type="number" step="any" min="-90" max="90" value="{{ values.get('latitude', '') }}" placeholder="未入力"></div>
+      <div class="call-field"><label for="longitude">地図の経度（明示された座標のみ）</label><input id="longitude" name="longitude" type="number" step="any" min="-180" max="180" value="{{ values.get('longitude', '') }}" placeholder="未入力"></div>
+    </div></section>
+    <section class="call-form-section"><h2>災害と被害</h2><div class="call-fields">
+      {% for field in disaster_fields %}<div class="call-field"><label for="disaster_{{ loop.index0 }}">{{ field }}</label><input id="disaster_{{ loop.index0 }}" name="disaster_{{ loop.index0 }}" value="{{ values.get('disaster_' ~ loop.index0, '') }}" maxlength="500" placeholder="不明"></div>{% endfor %}
+      {% for field in damage_fields %}<div class="call-field"><label for="damage_{{ loop.index0 }}">{{ field }}</label><input id="damage_{{ loop.index0 }}" name="damage_{{ loop.index0 }}" value="{{ values.get('damage_' ~ loop.index0, '') }}" maxlength="500" placeholder="不明"></div>{% endfor %}
+      <div class="call-field"><label for="rescue_request">救助要請</label><select id="rescue_request" name="rescue_request"><option value="不明" {% if values.get('rescue_request', '不明') == '不明' %}selected{% endif %}>不明</option><option value="あり" {% if values.get('rescue_request') == 'あり' %}selected{% endif %}>あり（明示的な要請）</option><option value="なし" {% if values.get('rescue_request') == 'なし' %}selected{% endif %}>なし</option></select></div>
+      <div class="call-field"><label for="urgency_level">緊急度</label><select id="urgency_level" name="urgency_level">{% for level in urgency_levels %}<option value="{{ level }}" {% if values.get('urgency_level', '要確認') == level %}selected{% endif %}>{{ level }}</option>{% endfor %}</select></div>
+      <div class="call-field full"><label for="urgency_basis">緊急度の判定根拠</label><textarea id="urgency_basis" name="urgency_basis" maxlength="1000" placeholder="高・中を選ぶ場合は原文上の根拠を記入。材料不足なら空欄">{{ values.get('urgency_basis', '') }}</textarea><p class="call-hint">「高」「中」は根拠必須です。判断材料が不足する場合は「要確認」を選んでください。「低」は選択肢にありません。</p></div>
+    </div></section>
+    <section class="call-form-section"><h2>通報者と確実性</h2><div class="call-fields">
+      {% for field in caller_fields %}<div class="call-field"><label for="caller_{{ loop.index0 }}">{{ field }}</label><input id="caller_{{ loop.index0 }}" name="caller_{{ loop.index0 }}" value="{{ values.get('caller_' ~ loop.index0, '') }}" maxlength="500" placeholder="不明"></div>{% endfor %}
+      <div class="call-field full call-confirmed"><label for="confirmed_facts">✓ 確認された情報（1行に1項目）</label><textarea id="confirmed_facts" name="confirmed_facts" maxlength="10000">{{ values.get('confirmed_facts', '') }}</textarea><p class="call-hint">通報者が直接確認したこと、または本人が明確に確認した内容だけを記載します。受付担当者の質問や言い換えは含めません。</p></div>
+      <div class="call-field full call-speculation"><label for="caller_speculation">通報者による推測（1行に1項目）</label><textarea id="caller_speculation" name="caller_speculation" maxlength="10000">{{ values.get('caller_speculation', '') }}</textarea><p class="call-hint">「思う」「かもしれない」「たぶん」「ように見える」などは確認済み情報と分けます。</p></div>
+    </div></section>
+    <div class="call-form-actions"><button class="call-submit" type="submit">未確認として登録</button><a class="call-cancel" href="{{ url_for('call_reports_dashboard') }}">キャンセル</a></div>
+  </form>
+</div>
+{% endblock %}

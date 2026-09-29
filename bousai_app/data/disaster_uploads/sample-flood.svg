@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 440" role="img" aria-labelledby="title">
+  <title id="title">冠水した道路の訓練用画像</title>
+  <rect width="720" height="440" fill="#d9e9e8"/>
+  <path d="M0 130h720v115H0z" fill="#a8c4a0"/>
+  <path d="M0 230 720 188v252H0z" fill="#56666a"/>
+  <path d="M0 316 720 270v170H0z" fill="#4b9ba0"/>
+  <path d="M0 342 720 297" stroke="#c9e8e4" stroke-width="5" stroke-dasharray="24 18"/>
+  <path d="M0 382 720 337" stroke="#e8d77b" stroke-width="6" stroke-dasharray="32 25"/>
+  <path d="M70 175h160v55H70zM500 150h130v45H500z" fill="#f5f7ef" stroke="#7a8e84" stroke-width="5"/>
+  <rect x="25" y="22" width="310" height="46" rx="4" fill="#fff"/>
+  <text x="43" y="52" font-family="sans-serif" font-size="21" fill="#174d48">TRAINING IMAGE / ROAD FLOODING</text>
+</svg>

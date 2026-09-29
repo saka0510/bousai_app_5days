@@ -1,62 +1,147 @@
 {% extends "base.html" %}
-
 {% block title %}被害情報 - 防災アプリ{% endblock %}
-
 {% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-  .damage-shell { margin: 0 auto; max-width: 1080px; padding: 28px 20px 56px; }
-  .damage-shell h2 { color: #2c5bac; margin: 0 0 8px; }
-  .damage-lead { margin: 0 0 22px; }
-  .damage-map { background: #f4f8f7; border: 1px solid #d7e2df; border-radius: 8px; margin-bottom: 24px; overflow: hidden; }
-  .damage-map h3 { font-size: 18px; margin: 0; padding: 16px 18px 12px; }
-  .damage-map-view { display: block; height: 360px; object-fit: cover; width: 100%; }
-  .damage-list { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
-  .damage-card { background: #fff; border: 1px solid #d7e2df; border-radius: 8px; overflow: hidden; }
-  .damage-card-image { aspect-ratio: 16 / 9; display: block; object-fit: cover; width: 100%; }
-  .damage-card-body { padding: 16px; }
-  .damage-card-heading { align-items: center; display: flex; gap: 8px; justify-content: space-between; margin-bottom: 10px; }
-  .damage-card-heading h3 { color: #2c5bac; font-size: 17px; margin: 0; }
-  .damage-source { background: #e8f2ee; border-radius: 999px; color: #28684d; font-size: 12px; padding: 4px 8px; white-space: nowrap; }
-  .damage-card p { line-height: 1.65; margin: 6px 0; }
-  .damage-location { color: #364b52; font-weight: 700; }
-  .damage-coordinates, .damage-time { color: #68777b; font-size: 13px; }
-  .street-view-link { color: #2c5bac; display: inline-block; font-size: 13px; font-weight: 700; margin-top: 5px; }
-  @media (max-width: 600px) { .damage-shell { padding: 20px 12px 40px; } .damage-card-heading { align-items: flex-start; flex-direction: column; } }
+  .damage-shell { margin: 0 24px 0 max(168px, calc((100% - 1160px) / 2)); max-width: 1160px; padding: 26px 0 56px; color: #263c3b; }
+  .damage-head { align-items: center; display: flex; gap: 16px; justify-content: space-between; margin-bottom: 14px; }.damage-head h1 { color: #174d48; font-size: 25px; margin: 0 0 5px; }.damage-lead { color: #596d6a; font-size: 13px; margin: 0; }.damage-actions { align-items: center; display: flex; gap: 10px; }.damage-count { color: #566966; font-size: 13px; white-space: nowrap; }
+  .damage-button { background: #17685f; border: 1px solid #17685f; border-radius: 4px; color: #fff; cursor: pointer; display: inline-flex; font: inherit; font-weight: 700; justify-content: center; min-height: 39px; padding: 8px 13px; text-decoration: none; white-space: nowrap; }.damage-button:hover { background: #0f514a; }.damage-shell a:focus-visible, .damage-shell button:focus-visible, .damage-shell select:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+  .damage-flash { border-radius: 4px; margin: 0 0 10px; padding: 10px 12px; }.damage-flash.success { background: #e7f4eb; border: 1px solid #a8d0b1; color: #235d34; }.damage-flash.error { background: #fff0ee; border: 1px solid #e9b9b4; color: #912b25; }
+  .damage-tabs { border-bottom: 1px solid #cad8d3; display: flex; gap: 4px; margin-bottom: 0; }.damage-tab { background: #eaf1ee; border: 1px solid #cad8d3; border-bottom: 0; border-radius: 4px 4px 0 0; color: #45615b; cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; padding: 9px 14px; }.damage-tab[aria-selected="true"] { background: #fff; color: #17685f; }.damage-panel { background: #fff; border: 1px solid #cad8d3; border-top: 0; min-width: 0; }.damage-panel[hidden] { display: none; }
+  .damage-map-shell { padding: 12px; }.damage-map { background: #eaf1ee; border: 1px solid #d3dfda; height: min(62vh, 520px); min-height: 300px; width: 100%; }.damage-map-status { color: #566966; font-size: 13px; padding: 12px; }.damage-map-note { color: #667875; font-size: 12px; margin: 8px 0 0; }.damage-marker-wrap { background: transparent; border: 0; }.damage-marker { align-items: center; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 2px 6px #263c3b66; color: #fff; display: flex; font-size: 12px; font-weight: 800; height: 32px; justify-content: center; width: 32px; }.damage-marker.is-verified { background: #2458a6; }.marker-flood,.marker-river_flood { background: #1479a5; }.marker-damage { background: #97633e; }.marker-landslide,.marker-slope_failure { background: #648047; }.marker-heavy_rain { background: #3976a4; }.marker-fire { background: #be392e; }.marker-other { background: #5d6b69; }.damage-map-popup { max-width: 240px; }.damage-map-popup h3 { color: #174d48; font-size: 14px; margin: 0 0 5px; }.damage-map-popup p { line-height: 1.45; margin: 4px 0; overflow-wrap: anywhere; }.damage-map-popup img { background: #edf2f0; display: block; margin-top: 6px; max-height: 130px; object-fit: contain; width: 100%; }.damage-popup-photo-missing { color: #687976; font-size: 12px; }
+  .damage-list-toolbar { align-items: center; display: flex; gap: 9px; justify-content: space-between; padding: 10px 12px; }.damage-list-toolbar label { color: #52635f; font-size: 12px; font-weight: 700; }.damage-list-toolbar select { background: #fff; border: 1px solid #bfcfca; border-radius: 3px; font: inherit; margin-left: 6px; min-height: 34px; padding: 5px 8px; }.damage-table-wrap { overflow-x: auto; }.damage-table { border-collapse: collapse; min-width: 950px; width: 100%; }.damage-table th { background: #eef5f2; color: #405754; font-size: 12px; text-align: left; }.damage-table th, .damage-table td { border-top: 1px solid #e0e9e5; padding: 9px; vertical-align: middle; }.damage-table td { font-size: 12px; line-height: 1.5; }.damage-comment { max-width: 320px; overflow-wrap: anywhere; white-space: pre-wrap; }.damage-thumb { background: #f1f5f3; border: 1px solid #d8e4e0; display: block; height: 68px; object-fit: contain; width: 100px; }.damage-no-photo { color: #71817e; }.damage-state { background: #edf0ef; border-radius: 999px; color: #53615e; display: inline-block; font-size: 11px; padding: 3px 8px; white-space: nowrap; }.damage-state.is-verified { background: #e3f2e8; color: #24633c; }.damage-row-actions { display: grid; gap: 6px; }.damage-row-actions form { margin: 0; }.damage-row-actions button { background: #fff; border: 1px solid #bfcfca; border-radius: 3px; color: #314b46; cursor: pointer; font: inherit; font-size: 11px; min-height: 30px; padding: 4px 7px; white-space: nowrap; }.damage-row-actions button.delete { border-color: #d8a09c; color: #a32925; }.damage-empty { color: #687976; padding: 36px 14px; text-align: center; }
+  @media (max-width: 700px) { .damage-shell { margin: 0 12px; padding: 18px 0 88px; }.damage-head { align-items: flex-start; flex-direction: column; }.damage-head h1 { font-size: 22px; }.damage-actions { justify-content: space-between; width: 100%; }.damage-map { height: 54vh; min-height: 260px; }.damage-list-toolbar { align-items: flex-start; flex-direction: column; } }
 </style>
-
 <div class="damage-shell">
-  <h2>被害情報</h2>
-  <p class="damage-lead">住民からの通報や自治体から提供された情報を、位置と画像で確認できます。</p>
-
-  <section class="damage-map" aria-labelledby="damage-map-title">
-    <h3 id="damage-map-title">情報提供地点マップ</h3>
-    <img class="damage-map-view" src="{{ url_for('static', filename='damage-map.svg') }}" alt="住民通報と自治体提供情報の地点を示した地図">
+  <header class="damage-head"><div><h1>被害情報</h1><p class="damage-lead">投稿された被害状況を地図と一覧で確認できます。</p></div><div class="damage-actions"><span class="damage-count">{{ damage_reports|length }}件</span><a class="damage-button" href="{{ url_for('damage_report_new') }}">被害情報を投稿</a></div></header>
+  {% for category, message in get_flashed_messages(with_categories=true) %}<p class="damage-flash {{ category }}" role="status">{{ message }}</p>{% endfor %}
+  {% if success %}<p class="damage-flash success" role="status">被害情報を投稿しました。</p>{% endif %}
+  <div class="damage-tabs" role="tablist" aria-label="被害情報の表示方法">
+    <button class="damage-tab" id="damageMapTab" type="button" role="tab" aria-selected="true" aria-controls="damageMapPanel" tabindex="0">地図</button>
+    <button class="damage-tab" id="damageListTab" type="button" role="tab" aria-selected="false" aria-controls="damageListPanel" tabindex="-1">一覧</button>
+  </div>
+  <section class="damage-panel" id="damageMapPanel" role="tabpanel" aria-labelledby="damageMapTab">
+    <div class="damage-map-shell"><div class="damage-map-status" id="damageMapStatus" role="status">地図を読み込み中です。</div><div class="damage-map" id="damageMap" aria-label="衛星画像で表示した被害情報の地図"></div><p class="damage-map-note">衛星画像 © Esri。マーカーを選択すると投稿内容を確認できます。</p></div>
   </section>
-
-  <section aria-labelledby="damage-list-title">
-    <h3 id="damage-list-title">受信した被害情報</h3>
+  <section class="damage-panel" id="damageListPanel" role="tabpanel" aria-labelledby="damageListTab" hidden>
     {% if damage_reports %}
-    <div class="damage-list">
-      {% for report in damage_reports %}
-      <article class="damage-card">
-        <img class="damage-card-image" src="{{ url_for('static', filename=report.image) }}" alt="{{ report.content }}">
-        <div class="damage-card-body">
-          <div class="damage-card-heading">
-            <h3>{{ report.location }}</h3>
-            <span class="damage-source">{{ report.source }}</span>
-          </div>
-          <p>{{ report.content }}</p>
-          <p class="damage-coordinates">緯度 {{ report.latitude }} / 経度 {{ report.longitude }}</p>
-          <p class="damage-time">受信日時: {{ report.reported_at }}</p>
-          <a class="street-view-link" href="https://www.openstreetmap.org/?mlat={{ report.latitude }}&mlon={{ report.longitude }}#map=18/{{ report.latitude }}/{{ report.longitude }}" target="_blank" rel="noopener">地点を詳しく見る ↗</a>
-        </div>
-      </article>
-      {% endfor %}
-    </div>
-    {% else %}
-    <p>現在、被害情報はありません。</p>
-    {% endif %}
+    <form class="damage-list-toolbar" method="get" action="{{ url_for('board') }}"><span>{{ damage_reports|length }}件の投稿</span><label for="damageSort">並べ替え<select id="damageSort" name="sort"><option value="reported_at" {% if sort_key == 'reported_at' %}selected{% endif %}>投稿日時</option><option value="type" {% if sort_key == 'type' %}selected{% endif %}>被害種別</option><option value="content" {% if sort_key == 'content' %}selected{% endif %}>コメント</option><option value="location" {% if sort_key == 'location' %}selected{% endif %}>位置</option><option value="verified" {% if sort_key == 'verified' %}selected{% endif %}>確認状態</option></select></label><button class="damage-button" type="submit">並べ替え</button></form>
+    <div class="damage-table-wrap"><table class="damage-table"><thead><tr><th scope="col">投稿日時</th><th scope="col">種別</th><th scope="col">コメント</th><th scope="col">位置（緯度・経度）</th><th scope="col">写真</th><th scope="col">確認状態</th>{% if can_manage %}<th scope="col">操作</th>{% endif %}</tr></thead><tbody>
+      {% for report in damage_reports %}<tr>
+        <td>{{ report.reported_at or '日時不明' }}</td><td>{{ report.type_label }}{% if report.source %}<small class="damage-source-name">{{ report.source }}</small>{% endif %}</td><td class="damage-comment">{{ report.content or 'コメントなし' }}</td>
+        <td>{% if report.legacy_report and report.location %}<strong>{{ report.location }}</strong><br>{% endif %}{% if report.has_coordinates %}{{ report.latitude }}, {{ report.longitude }}{% else %}座標不明{% endif %}</td>
+        <td>{% if report.image_url %}<img class="damage-thumb" src="{{ report.image_url }}" alt="{{ report.original_name }}" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="damage-no-photo" hidden>写真を読み込めません</span>{% else %}<span class="damage-no-photo">写真なし</span>{% endif %}</td>
+        <td><span class="damage-state {% if report.verified %}is-verified{% endif %}">{% if report.verified %}✓ 確認済み{% else %}未確認{% endif %}</span></td>
+        {% if can_manage %}<td><div class="damage-row-actions"><form method="post" action="{{ url_for('damage_report_verification', report_id=report.id) }}" onsubmit="return confirm('確認状態を変更しますか？')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="verified" value="{{ 'false' if report.verified else 'true' }}"><button type="submit">{% if report.verified %}未確認に戻す{% else %}確認済みにする{% endif %}</button></form><form method="post" action="{{ url_for('damage_report_delete', report_id=report.id) }}" onsubmit="return confirm('この投稿と管理対象の写真を削除します。よろしいですか？')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="delete" type="submit">削除</button></form></div></td>{% endif %}
+      </tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}<p class="damage-empty">被害情報の投稿はまだありません。必要に応じて新しい状況を投稿してください。</p>{% endif %}
   </section>
 </div>
+<script id="damageReportData" type="application/json">{{ damage_reports_json|tojson }}</script>
+<script>
+(function() {
+  const reports = JSON.parse(document.getElementById('damageReportData').textContent);
+  const tabs = [document.getElementById('damageMapTab'), document.getElementById('damageListTab')];
+  const panels = [document.getElementById('damageMapPanel'), document.getElementById('damageListPanel')];
+  function selectTab(index, moveFocus) {
+    tabs.forEach(function(tab, tabIndex) {
+      const selected = tabIndex === index;
+      tab.setAttribute('aria-selected', String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+      panels[tabIndex].hidden = !selected;
+    });
+    if (moveFocus) tabs[index].focus();
+    if (index === 0 && window.damageMapInstance) window.damageMapInstance.invalidateSize();
+  }
+  tabs.forEach(function(tab, index) {
+    tab.addEventListener('click', function() { selectTab(index, false); });
+    tab.addEventListener('keydown', function(event) {
+      let nextIndex = index;
+      if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') nextIndex = (index + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length;
+      else if (event.key === 'Home') nextIndex = 0;
+      else if (event.key === 'End') nextIndex = tabs.length - 1;
+      else return;
+      event.preventDefault();
+      selectTab(nextIndex, true);
+    });
+  });
 
+  const mapElement = document.getElementById('damageMap');
+  const mapStatus = document.getElementById('damageMapStatus');
+  if (!window.L || !mapElement) {
+    mapElement.hidden = true;
+    mapStatus.textContent = '地図を利用できません。一覧表示から投稿内容を確認できます。';
+    return;
+  }
+  try {
+    const map = L.map(mapElement, {scrollWheelZoom: false}).setView([40.8222, 140.7474], 12);
+    window.damageMapInstance = map;
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri',
+      maxZoom: 19
+    }).addTo(map);
+    mapStatus.hidden = true;
+    map.on('tileerror', function() {
+      mapStatus.hidden = false;
+      mapStatus.textContent = '地図タイルを読み込めません。一覧表示は引き続き利用できます。';
+    });
+    const bounds = [];
+    const symbols = {flood:'冠', damage:'建', landslide:'土', heavy_rain:'雨', slope_failure:'崩', fire:'火', river_flood:'河', other:'他'};
+    reports.filter(function(report) { return report.has_coordinates; }).forEach(function(report) {
+      const iconClass = ['flood', 'damage', 'landslide', 'heavy_rain', 'slope_failure', 'fire', 'river_flood', 'other'].includes(report.type) ? report.type : 'other';
+      const iconText = symbols[iconClass] + (report.verified ? '✓' : '');
+      const verifiedClass = report.verified ? ' is-verified' : '';
+      const icon = L.divIcon({className:'damage-marker-wrap', html:'<span class="damage-marker marker-' + iconClass + verifiedClass + '">' + iconText + '</span>', iconSize:[36,36], iconAnchor:[18,18]});
+      const marker = L.marker([report.latitude, report.longitude], {icon:icon}).addTo(map);
+      const popup = document.createElement('div');
+      popup.className = 'damage-map-popup';
+      const heading = document.createElement('h3');
+      heading.textContent = (report.verified ? '✓ 確認済み / ' : '未確認 / ') + report.type_label;
+      popup.appendChild(heading);
+      if (report.legacy_report && report.location) {
+        const location = document.createElement('p');
+        location.textContent = report.location;
+        popup.appendChild(location);
+      }
+      if (report.source) {
+        const source = document.createElement('p');
+        source.textContent = report.source;
+        popup.appendChild(source);
+      }
+      const comment = document.createElement('p');
+      comment.textContent = report.content || 'コメントなし';
+      popup.appendChild(comment);
+      const timestamp = document.createElement('p');
+      timestamp.textContent = report.reported_at || '日時不明';
+      popup.appendChild(timestamp);
+      if (report.image_url) {
+        const image = document.createElement('img');
+        image.src = report.image_url;
+        image.alt = report.original_name || '被害状況写真';
+        const missingPhoto = document.createElement('span');
+        missingPhoto.className = 'damage-popup-photo-missing';
+        missingPhoto.hidden = true;
+        missingPhoto.textContent = '写真を読み込めません';
+        image.addEventListener('error', function() { image.hidden = true; missingPhoto.hidden = false; });
+        popup.append(image, missingPhoto);
+      } else {
+        const noPhoto = document.createElement('p');
+        noPhoto.className = 'damage-popup-photo-missing';
+        noPhoto.textContent = '写真なし';
+        popup.appendChild(noPhoto);
+      }
+      marker.bindPopup(popup);
+      bounds.push([report.latitude, report.longitude]);
+    });
+    if (bounds.length > 1) map.fitBounds(bounds, {padding:[24,24], maxZoom:16});
+    else if (bounds.length === 1) map.setView(bounds[0], 15);
+    else { mapStatus.hidden = false; mapStatus.textContent = '地図に表示する投稿はありません。'; }
+  } catch (error) {
+    mapElement.hidden = true;
+    mapStatus.textContent = '地図を初期化できません。一覧表示から投稿内容を確認できます。';
+  }
+}());
+</script>
 {% endblock %}

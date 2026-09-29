@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}災害対応一覧 - 防災アプリ{% endblock %}
+{% block content %}
+<style>
+  .ops-shell { margin: 0 24px 0 max(168px, calc((100% - 1180px) / 2)); max-width: 1180px; padding: 28px 0 52px; color: #263c3b; }
+  .ops-head { align-items: end; display: flex; gap: 20px; justify-content: space-between; margin-bottom: 20px; }
+  .ops-eyebrow { color: #28746b; font-size: 11px; font-weight: 800; letter-spacing: .08em; margin: 0 0 6px; }
+  .ops-head h1 { color: #174d48; font-size: 27px; margin: 0 0 5px; }
+  .ops-lead { color: #596d6a; margin: 0; }
+  .ops-sample { color: #6f7773; font-size: 12px; margin: 8px 0 0; }
+  .ops-button { align-items: center; background: #17685f; border: 1px solid #17685f; border-radius: 4px; color: #fff; display: inline-flex; font: inherit; font-weight: 700; justify-content: center; min-height: 40px; padding: 8px 14px; text-decoration: none; white-space: nowrap; }
+  .ops-button:hover { background: #0f514a; }
+  .ops-button:focus-visible, .ops-shell a:focus-visible, .ops-shell button:focus-visible, .ops-shell input:focus-visible, .ops-shell select:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+  .ops-stats { display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
+  .ops-stat { background: #fff; border: 1px solid #d8e4e0; border-radius: 5px; min-width: 0; padding: 13px 15px; }
+  .ops-stat span { color: #60716f; display: block; font-size: 12px; }
+  .ops-stat strong { color: #174d48; display: block; font-size: 24px; line-height: 1.3; }
+  .ops-filter { background: #fff; border: 1px solid #d8e4e0; border-radius: 5px; margin-bottom: 13px; padding: 14px; }
+  .ops-fields { display: grid; gap: 10px; grid-template-columns: repeat(5, minmax(125px, 1fr)); }
+  .ops-field { display: grid; gap: 5px; min-width: 0; }
+  .ops-field label { color: #445b58; font-size: 12px; font-weight: 700; }
+  .ops-field input, .ops-field select { background: #fff; border: 1px solid #bfcfca; border-radius: 3px; color: #263c3b; font: inherit; min-height: 38px; min-width: 0; padding: 7px 9px; width: 100%; }
+  .ops-keyword { grid-column: span 2; }
+  .ops-filter-actions { align-items: center; display: flex; gap: 14px; margin-top: 12px; }
+  .ops-filter-actions button { cursor: pointer; }
+  .ops-clear { color: #17685f; font-size: 14px; font-weight: 700; }
+  .ops-results { align-items: center; color: #586a67; display: flex; font-size: 13px; justify-content: space-between; margin: 12px 0 8px; }
+  .ops-table-wrap { background: #fff; border: 1px solid #d8e4e0; border-radius: 5px; overflow-x: auto; }
+  .ops-table { border-collapse: collapse; min-width: 850px; width: 100%; }
+  .ops-table th { background: #eef5f2; color: #405754; font-size: 12px; font-weight: 700; text-align: left; }
+  .ops-table th, .ops-table td { border-bottom: 1px solid #e2eae7; padding: 11px 10px; vertical-align: middle; }
+  .ops-table tr:last-child td { border-bottom: 0; }
+  .ops-table tbody tr { cursor: pointer; }
+  .ops-table tbody tr:hover, .ops-table tbody tr:focus { background: #f2f8f6; outline: 2px solid #6ba69b; outline-offset: -2px; }
+  .ops-table td { font-size: 13px; }
+  .ops-table td a { color: inherit; text-decoration: none; }
+  .ops-title { color: #174d48; display: block; font-weight: 700; }
+  .ops-muted { color: #70807d; display: block; font-size: 11px; margin-top: 3px; }
+  .ops-pill { border-radius: 999px; display: inline-block; font-size: 12px; font-weight: 700; padding: 4px 8px; white-space: nowrap; }
+  .priority-emergency { background: #fde9e7; color: #a32925; }
+  .priority-high { background: #fff0d4; color: #80520a; }
+  .priority-medium { background: #e8f2fb; color: #235d86; }
+  .priority-low { background: #edf0ef; color: #53615e; }
+  .status-open { background: #fff0d4; color: #80520a; }
+  .status-working { background: #e4f1ed; color: #17685f; }
+  .status-onsite { background: #e8f2fb; color: #235d86; }
+  .status-done { background: #edf0ef; color: #53615e; }
+  .source-label { background: #e4f1ed; color: #17685f; }
+  .method-label { background: #eef2f1; color: #4a5e5a; }
+  .ops-empty { color: #61716f; padding: 30px 16px; text-align: center; }
+  @media (max-width: 900px) { .ops-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); } .ops-keyword { grid-column: span 2; } }
+  @media (max-width: 600px) { .ops-shell { margin: 0 12px; padding: 20px 0 88px; } .ops-head { align-items: stretch; flex-direction: column; gap: 12px; } .ops-head h1 { font-size: 23px; } .ops-button { align-self: flex-start; } .ops-stats { gap: 7px; grid-template-columns: repeat(2, minmax(0, 1fr)); } .ops-stat { padding: 10px; } .ops-stat strong { font-size: 21px; } .ops-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ops-keyword { grid-column: span 2; } .ops-filter-actions { align-items: flex-start; flex-direction: column; gap: 10px; } }
+</style>
+<div class="ops-shell">
+  <header class="ops-head">
+    <div>
+      <p class="ops-eyebrow">OPERATIONS / AOMORI</p>
+      <h1>災害対応一覧</h1>
+      <p class="ops-lead">住民・消防団・監視所・事業者からの報告を一元管理</p>
+      <p class="ops-sample">訓練用サンプルデータを含みます</p>
+    </div>
+    <a class="ops-button" href="{{ url_for('disaster_operation_new') }}">受付を登録</a>
+  </header>
+
+  <section class="ops-stats" aria-label="受付状況">
+    <div class="ops-stat"><span>総受付件数</span><strong>{{ stats.total }}</strong></div>
+    <div class="ops-stat"><span>優先対応（緊急・高）</span><strong>{{ stats.priority }}</strong></div>
+    <div class="ops-stat"><span>未完了</span><strong>{{ stats.open }}</strong></div>
+    <div class="ops-stat"><span>チャット・画像あり</span><strong>{{ stats.media }}</strong></div>
+  </section>
+
+  <form class="ops-filter" method="get" action="{{ url_for('disaster_operations') }}">
+    <div class="ops-fields">
+      <div class="ops-field"><label for="priority">重要度</label><select id="priority" name="priority"><option value="">すべて</option>{% for option in priorities %}<option value="{{ option }}" {% if filters.priority == option %}selected{% endif %}>{{ option }}</option>{% endfor %}</select></div>
+      <div class="ops-field"><label for="risk">危険の種類</label><select id="risk" name="risk"><option value="">すべて</option>{% for option in risks %}<option value="{{ option }}" {% if filters.risk == option %}selected{% endif %}>{{ option }}</option>{% endfor %}</select></div>
+      <div class="ops-field"><label for="reporter_type">報告元</label><select id="reporter_type" name="reporter_type"><option value="">すべて</option>{% for option in reporter_types %}<option value="{{ option }}" {% if filters.reporter_type == option %}selected{% endif %}>{{ option }}</option>{% endfor %}</select></div>
+      <div class="ops-field"><label for="source">受付方法</label><select id="source" name="source"><option value="">すべて</option>{% for option in sources %}<option value="{{ option }}" {% if filters.source == option %}selected{% endif %}>{{ option }}</option>{% endfor %}</select></div>
+      <div class="ops-field"><label for="status">対応状況</label><select id="status" name="status"><option value="">すべて</option>{% for option in statuses %}<option value="{{ option }}" {% if filters.status == option %}selected{% endif %}>{{ option }}</option>{% endfor %}</select></div>
+      <div class="ops-field ops-keyword"><label for="q">キーワード</label><input id="q" name="q" type="search" value="{{ filters.q }}" placeholder="受付番号・案件名・場所・通報者"></div>
+    </div>
+    <div class="ops-filter-actions"><button class="ops-button" type="submit">絞り込む</button><a class="ops-clear" href="{{ url_for('disaster_operations') }}">条件をクリア</a></div>
+  </form>
+
+  <div class="ops-results"><span>{{ cases|length }}件を表示 / 優先度の高い順</span></div>
+  {% if cases %}
+  <div class="ops-table-wrap">
+    <table class="ops-table">
+      <thead><tr><th scope="col">重要度</th><th scope="col">報告元</th><th scope="col">受付方法</th><th scope="col">案件</th><th scope="col">場所</th><th scope="col">受付時刻</th><th scope="col">対応状況</th></tr></thead>
+      <tbody>
+      {% for case in cases %}
+        {% set priority_class = {'緊急': 'priority-emergency', '高': 'priority-high', '中': 'priority-medium', '低': 'priority-low'}.get(case.priority, 'priority-low') %}
+        {% set status_class = {'未対応': 'status-open', '対応中': 'status-working', '現地確認中': 'status-onsite', '完了': 'status-done'}.get(case.status, 'status-open') %}
+        <tr tabindex="0" role="link" data-href="{{ url_for('disaster_operation_detail', report_id=case.id) }}">
+          <td><span class="ops-pill {{ priority_class }}">{{ case.priority }}</span></td>
+          <td><span class="ops-pill source-label">{{ case.reporter_type }}</span></td>
+          <td><span class="ops-pill method-label">{{ case.source }}</span>{% if case.attachments %}<span class="ops-muted">画像 {{ case.attachments|length }}</span>{% endif %}</td>
+          <td><a class="ops-title" href="{{ url_for('disaster_operation_detail', report_id=case.id) }}">{{ case.title }}</a><span class="ops-muted">{{ case.risk }}</span></td>
+          <td>{{ case.location }}</td><td>{{ case.received_at }}</td>
+          <td><span class="ops-pill {{ status_class }}">{{ case.status }}</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="ops-table-wrap ops-empty">条件に一致する受付はありません。</div>{% endif %}
+</div>
+<script>
+  document.querySelectorAll('.ops-table tbody tr[data-href]').forEach(function(row) {
+    row.addEventListener('click', function(event) {
+      if (!event.target.closest('a')) window.location.href = row.dataset.href;
+    });
+    row.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.location.href = row.dataset.href; }
+    });
+  });
+</script>
+{% endblock %}

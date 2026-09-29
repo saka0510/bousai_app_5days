@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}被害情報を投稿 - 防災アプリ{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  .damage-form-shell { margin: 0 auto; max-width: 900px; padding: 24px 20px 56px; color: #263c3b; }.damage-form-back { color: #17685f; display: inline-block; font-weight: 700; margin-bottom: 12px; }.damage-form { background: #fff; border: 1px solid #d8e4e0; border-radius: 5px; padding: 18px; }.damage-form h1 { color: #174d48; font-size: 23px; margin: 0 0 7px; }.damage-form-intro { color: #586a67; font-size: 13px; line-height: 1.6; margin: 0 0 15px; }.damage-form-grid { display: grid; gap: 13px; grid-template-columns: repeat(2, minmax(0, 1fr)); }.damage-field { display: grid; gap: 5px; min-width: 0; }.damage-field.full { grid-column: 1 / -1; }.damage-field label, .damage-field-label { color: #445b58; font-size: 12px; font-weight: 700; }.damage-field input, .damage-field select, .damage-field textarea { background: #fff; border: 1px solid #bfcfca; border-radius: 3px; color: #263c3b; font: inherit; min-height: 40px; min-width: 0; padding: 8px 10px; width: 100%; }.damage-field textarea { min-height: 100px; resize: vertical; }.damage-field textarea:focus-visible, .damage-field input:focus-visible, .damage-field select:focus-visible, .damage-form button:focus-visible, .damage-form a:focus-visible, .photo-choice:focus-within { outline: 3px solid #e3a928; outline-offset: 2px; }.damage-hint { color: #71817e; font-size: 11px; line-height: 1.5; margin: 0; }.damage-map-select { border: 1px solid #d3dfda; height: 320px; width: 100%; }.damage-location-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 9px; }.damage-secondary { background: #fff; border: 1px solid #9bb6ae; border-radius: 4px; color: #17685f; cursor: pointer; font: inherit; font-weight: 700; min-height: 38px; padding: 7px 11px; }.damage-gps-status { color: #52635f; font-size: 12px; min-height: 18px; }.damage-photo-choices { display: flex; flex-wrap: wrap; gap: 8px; }.photo-choice { background: #f3f7f5; border: 1px solid #cbdcd6; border-radius: 4px; color: #17685f; cursor: pointer; display: inline-flex; font-size: 13px; font-weight: 700; padding: 9px 11px; }.damage-file-input { height: 1px; left: -10000px; overflow: hidden; position: absolute; width: 1px; }.damage-photo-preview { align-items: flex-start; display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }.damage-photo-preview img { background: #f1f5f3; border: 1px solid #d8e4e0; height: 150px; object-fit: contain; width: 190px; }.damage-photo-preview p { color: #52635f; font-size: 12px; margin: 0; overflow-wrap: anywhere; }.damage-error { background: #fff0ee; border: 1px solid #e9b9b4; border-radius: 4px; color: #912b25; margin-bottom: 14px; padding: 10px 12px; }.damage-submit { background: #17685f; border: 1px solid #17685f; border-radius: 4px; color: #fff; cursor: pointer; font: inherit; font-weight: 700; min-height: 42px; padding: 9px 15px; }.damage-form-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }.damage-cancel { align-self: center; color: #17685f; font-weight: 700; }.damage-form-status { color: #52635f; font-size: 12px; line-height: 1.5; }
+  .damage-file-input:focus-visible + .photo-choice { outline: 3px solid #e3a928; outline-offset: 2px; }
+  @media (max-width: 600px) { .damage-form-shell { padding: 18px 12px 88px; }.damage-form { padding: 13px; }.damage-form h1 { font-size: 21px; }.damage-form-grid { grid-template-columns: 1fr; }.damage-field.full { grid-column: auto; }.damage-map-select { height: 270px; }.damage-form-actions { align-items: flex-start; flex-direction: column; } }
+</style>
+<div class="damage-form-shell"><a class="damage-form-back" href="{{ url_for('board') }}">← 被害情報一覧へ戻る</a>
+  <form class="damage-form" method="post" enctype="multipart/form-data">
+    <h1>被害情報を投稿</h1><p class="damage-form-intro">写真と発生位置を共有してください。住所や被害状況は入力内容の範囲で記録されます。</p>
+    {% if error %}<div class="damage-error" role="alert">{{ error }}</div>{% endif %}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="damage-form-grid">
+      <div class="damage-field"><label for="damageType">被害の種類</label><select id="damageType" name="type" required>{% for value, label in damage_types.items() %}<option value="{{ value }}" {% if values.get('type', 'other') == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+      <div class="damage-field"><span class="damage-field-label">発生位置</span><div class="damage-location-actions"><button class="damage-secondary" id="getLocation" type="button">現在地を取得</button><span class="damage-form-status">地図をクリックするか座標を入力</span></div><p class="damage-gps-status" id="gpsStatus" role="status" aria-live="polite">位置情報にはHTTPSとブラウザーの許可が必要です。</p></div>
+      <div class="damage-field full"><div class="damage-map-select" id="locationMap" role="application" aria-label="地図をクリックして発生位置を指定"></div><p class="damage-hint" id="mapStatus" role="status">地図が利用できない場合は緯度・経度を直接入力できます。</p></div>
+      <div class="damage-field"><label for="latitude">緯度</label><input id="latitude" name="latitude" type="number" step="any" min="-90" max="90" required value="{{ values.get('latitude', '') }}" aria-describedby="coordinateHint"></div>
+      <div class="damage-field"><label for="longitude">経度</label><input id="longitude" name="longitude" type="number" step="any" min="-180" max="180" required value="{{ values.get('longitude', '') }}" aria-describedby="coordinateHint"></div>
+      <p class="damage-hint full" id="coordinateHint">緯度 -90〜90、経度 -180〜180。地図・GPS・直接入力で同期します。</p>
+      <div class="damage-field full"><label for="comment">状況コメント（任意・1,000文字以内）</label><textarea id="comment" name="content" maxlength="1000">{{ values.get('content', '') }}</textarea></div>
+      <div class="damage-field full"><span class="damage-field-label">状況写真（必須・8MB以下）</span><div class="damage-photo-choices"><input class="damage-file-input" id="cameraPhoto" name="photo" type="file" accept="image/jpeg,image/png,image/gif,image/webp" capture="environment"><label class="photo-choice" for="cameraPhoto">カメラを起動</label><input class="damage-file-input" id="filePhoto" name="photo" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp"><label class="photo-choice" for="filePhoto">写真を選択</label></div><div class="damage-photo-preview" id="photoPreview" aria-live="polite"><p id="photoName">写真が選択されていません。</p></div><p class="damage-hint">JPEG、PNG、GIF、WebP。カメラが開けない場合は「写真を選択」を使用してください。</p></div>
+    </div>
+    <div class="damage-form-actions"><button class="damage-submit" type="submit">被害情報を投稿</button><a class="damage-cancel" href="{{ url_for('board') }}">キャンセル</a></div>
+  </form>
+</div>
+<script>
+(function() {
+  const latitudeInput = document.getElementById('latitude');
+  const longitudeInput = document.getElementById('longitude');
+  const gpsStatus = document.getElementById('gpsStatus');
+  const mapStatus = document.getElementById('mapStatus');
+  const cameraInput = document.getElementById('cameraPhoto');
+  const fileInput = document.getElementById('filePhoto');
+  const photoName = document.getElementById('photoName');
+  const photoPreview = document.getElementById('photoPreview');
+  let map;
+  let marker;
+  let previewUrl;
+
+  function setCoordinates(latitude, longitude, zoom) {
+    latitudeInput.value = Number(latitude).toFixed(6);
+    longitudeInput.value = Number(longitude).toFixed(6);
+    const point = [Number(latitude), Number(longitude)];
+    if (map && window.L) {
+      if (marker) marker.setLatLng(point);
+      else marker = L.marker(point).addTo(map);
+      map.setView(point, zoom || 15);
+    }
+  }
+
+  function syncMarkerFromInputs() {
+    const latitude = Number(latitudeInput.value);
+    const longitude = Number(longitudeInput.value);
+    if (!latitudeInput.value || !longitudeInput.value || !Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return;
+    const point = [latitude, longitude];
+    if (map && window.L) {
+      if (marker) marker.setLatLng(point);
+      else marker = L.marker(point).addTo(map);
+      map.setView(point, Math.max(map.getZoom(), 13));
+    }
+  }
+
+  latitudeInput.addEventListener('change', syncMarkerFromInputs);
+  longitudeInput.addEventListener('change', syncMarkerFromInputs);
+  if (window.L) {
+    try {
+      map = L.map('locationMap').setView([40.8222, 140.7474], 12);
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {attribution:'Tiles &copy; Esri', maxZoom:19}).addTo(map);
+      map.on('click', function(event) { setCoordinates(event.latlng.lat, event.latlng.lng, 16); gpsStatus.textContent = '地図上の位置を設定しました。'; });
+      map.on('tileerror', function() { mapStatus.textContent = '地図タイルを読み込めません。座標欄へ直接入力できます。'; });
+      syncMarkerFromInputs();
+    } catch (error) {
+      mapStatus.textContent = '地図を初期化できません。座標欄へ直接入力できます。';
+    }
+  } else {
+    mapStatus.textContent = '地図ライブラリを利用できません。座標欄へ直接入力できます。';
+  }
+
+  document.getElementById('getLocation').addEventListener('click', function() {
+    if (!navigator.geolocation) {
+      gpsStatus.textContent = 'このブラウザーは位置情報に対応していません。地図または座標欄で指定してください。';
+      return;
+    }
+    gpsStatus.textContent = '現在地を取得しています…';
+    navigator.geolocation.getCurrentPosition(function(position) {
+      setCoordinates(position.coords.latitude, position.coords.longitude, 16);
+      gpsStatus.textContent = '現在地を設定しました。位置を確認してください。';
+    }, function(error) {
+      if (error.code === 1) gpsStatus.textContent = '位置情報の利用が許可されませんでした。地図または座標欄で指定してください。';
+      else if (error.code === 2) gpsStatus.textContent = '現在地を取得できませんでした。地図または座標欄で指定してください。';
+      else if (error.code === 3) gpsStatus.textContent = '位置情報の取得がタイムアウトしました。地図または座標欄で指定してください。';
+      else gpsStatus.textContent = '位置情報の取得に失敗しました。地図または座標欄で指定してください。';
+    }, {enableHighAccuracy:true, timeout:10000, maximumAge:0});
+  });
+
+  function showPhoto(input, otherInput) {
+    const photo = input.files && input.files[0];
+    if (!photo) return;
+    otherInput.value = '';
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = URL.createObjectURL(photo);
+    photoName.textContent = photo.name + ' (' + Math.ceil(photo.size / 1024) + ' KB)';
+    const oldPreview = photoPreview.querySelector('img');
+    if (oldPreview) oldPreview.remove();
+    const image = document.createElement('img');
+    image.src = previewUrl;
+    image.alt = '選択した状況写真のプレビュー: ' + photo.name;
+    image.addEventListener('error', function() { image.hidden = true; });
+    photoPreview.prepend(image);
+  }
+  cameraInput.addEventListener('change', function() { showPhoto(cameraInput, fileInput); });
+  fileInput.addEventListener('change', function() { showPhoto(fileInput, cameraInput); });
+}());
+</script>
+{% endblock %}

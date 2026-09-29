@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}通報整理 - 防災アプリ{% endblock %}
+{% block content %}
+<style>
+  .transcript-shell { margin: 0 auto; max-width: 820px; padding: 28px 20px 56px; color: #263c3b; }
+  .transcript-panel { background: #fff; border: 1px solid #d8e4e0; border-radius: 5px; padding: 20px; }
+  .transcript-panel h1 { color: #174d48; font-size: 23px; margin: 0 0 7px; }
+  .transcript-lead, .transcript-caution { color: #586a67; font-size: 13px; line-height: 1.65; margin: 0 0 14px; }
+  .transcript-caution { background: #fff9e9; border: 1px solid #ead7a0; border-radius: 4px; color: #604d19; padding: 10px 12px; }
+  .transcript-error { background: #fff0ee; border: 1px solid #e9b9b4; border-radius: 4px; color: #912b25; margin-bottom: 14px; padding: 10px 12px; }
+  .transcript-field { display: grid; gap: 7px; margin-top: 16px; }
+  .transcript-field label { color: #445b58; font-size: 13px; font-weight: 700; }
+  .transcript-field textarea { background: #fff; border: 1px solid #bfcfca; border-radius: 3px; color: #263c3b; font: inherit; line-height: 1.6; min-height: 270px; padding: 10px; resize: vertical; width: 100%; }
+  .transcript-file { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; }
+  .transcript-file input { max-width: 100%; }
+  .transcript-file-name, .transcript-hint { color: #71817e; font-size: 12px; }
+  .transcript-hint { line-height: 1.5; margin: 0; }
+  .transcript-submit { background: #17685f; border: 1px solid #17685f; border-radius: 4px; color: #fff; cursor: pointer; font: inherit; font-weight: 700; min-height: 42px; padding: 9px 15px; }
+  .transcript-submit:hover { background: #0f514a; }
+  .transcript-panel textarea:focus-visible, .transcript-panel input:focus-visible, .transcript-panel button:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+  @media (max-width: 600px) { .transcript-shell { padding: 18px 12px 88px; }.transcript-panel { padding: 14px; }.transcript-panel h1 { font-size: 21px; }.transcript-panel textarea { min-height: 220px; } }
+</style>
+<div class="transcript-shell">
+  <section class="transcript-panel" aria-labelledby="transcriptTitle">
+    <h1 id="transcriptTitle">通報整理</h1>
+    <p class="transcript-lead">通話文字起こしを貼り付けるか、UTF-8形式の.txtファイルを添付してください。送信後、抽出した項目を災害対応一覧へ登録します。</p>
+    <p class="transcript-caution">話者ラベル「通報者/住民」の直接発言を中心に一次抽出します。受付側の質問や復唱は確認情報にしません。推測表現や曖昧な情報は確定扱いせず、緊急度は判断根拠がなければ「要確認」とします。文字起こし全文は災害対応一覧には表示せず、確認用記録として保管します。</p>
+    {% if error %}<div class="transcript-error" role="alert">{{ error }}</div>{% endif %}
+    <form method="post" action="{{ url_for('call_reports_dashboard') }}" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="transcript-field"><label for="transcriptText">文字起こしを貼り付け</label><textarea id="transcriptText" name="transcript" maxlength="50000" placeholder="通報者：…&#10;受付：…">{{ transcript }}</textarea></div>
+      <div class="transcript-field"><label for="transcriptFile">または文字起こしファイルを添付（.txt、256KB以下）</label><div class="transcript-file"><input id="transcriptFile" name="transcript_file" type="file" accept=".txt,text/plain"><span class="transcript-file-name" id="transcriptFileName" aria-live="polite">ファイル未選択</span></div><p class="transcript-hint">ファイルを選択した場合は、貼り付け欄より添付ファイルの内容を使用します。</p></div>
+      <div class="transcript-field"><button class="transcript-submit" type="submit">災害対応一覧へ追加</button></div>
+    </form>
+  </section>
+</div>
+<script>
+document.getElementById('transcriptFile').addEventListener('change', function() {
+  const file = this.files && this.files[0];
+  document.getElementById('transcriptFileName').textContent = file ? file.name + ' (' + Math.ceil(file.size / 1024) + ' KB)' : 'ファイル未選択';
+});
+</script>
+{% endblock %}

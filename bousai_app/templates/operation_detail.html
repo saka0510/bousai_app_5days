@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{{ case.title }} - 災害対応{% endblock %}
+{% block content %}
+<style>
+  .ops-shell { margin: 0 24px 0 max(168px, calc((100% - 1180px) / 2)); max-width: 1180px; padding: 26px 0 52px; color: #263c3b; }
+  .ops-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 18px; }
+  .ops-button { background: #17685f; border: 1px solid #17685f; border-radius: 4px; color: #fff; display: inline-flex; font: inherit; font-weight: 700; min-height: 38px; padding: 8px 13px; text-decoration: none; }
+  .ops-button.secondary { background: #fff; color: #17685f; }
+  .ops-button:hover { background: #0f514a; color: #fff; }
+  .ops-shell a:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+  .ops-case-head { background: #fff; border: 1px solid #d8e4e0; border-radius: 5px; margin-bottom: 14px; padding: 17px 19px; }
+  .ops-case-meta { color: #687976; font-size: 13px; margin: 0 0 8px; }
+  .ops-case-head h1 { color: #174d48; font-size: 24px; margin: 0 0 12px; }
+  .ops-badges { display: flex; flex-wrap: wrap; gap: 7px; }
+  .ops-pill { border-radius: 999px; display: inline-block; font-size: 12px; font-weight: 700; padding: 4px 8px; }
+  .priority-emergency { background: #fde9e7; color: #a32925; }.priority-high { background: #fff0d4; color: #80520a; }.priority-medium { background: #e8f2fb; color: #235d86; }.priority-low,.status-done { background: #edf0ef; color: #53615e; }
+  .status-open { background: #fff0d4; color: #80520a; }.status-working { background: #e4f1ed; color: #17685f; }.status-onsite { background: #e8f2fb; color: #235d86; }.source-label { background: #e4f1ed; color: #17685f; }.method-label { background: #eef2f1; color: #4a5e5a; }
+  .ops-columns { display: grid; gap: 14px; grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr); align-items: start; }
+  .ops-section { background: #fff; border: 1px solid #d8e4e0; border-radius: 5px; margin-bottom: 14px; min-width: 0; padding: 16px; }
+  .ops-section h2 { color: #174d48; font-size: 16px; margin: 0 0 13px; }
+  .ops-details { line-height: 1.75; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .ops-message { border-top: 1px solid #e4ebe8; padding: 11px 0; }.ops-message:first-of-type { border-top: 0; padding-top: 0; }
+  .ops-message-meta { color: #71817e; font-size: 12px; margin: 0 0 4px; }.ops-message p:last-child { line-height: 1.65; margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+  .ops-timeline { list-style: none; margin: 0; padding: 0 0 0 5px; }.ops-timeline li { border-left: 2px solid #b8d2cb; margin-left: 5px; padding: 0 0 17px 17px; position: relative; }.ops-timeline li:last-child { border-left-color: transparent; padding-bottom: 0; }.ops-timeline li::before { background: #17685f; border: 2px solid #fff; border-radius: 50%; content: ''; height: 9px; left: -7px; position: absolute; top: 2px; width: 9px; }.ops-timeline time { color: #71817e; display: block; font-size: 12px; }.ops-timeline strong { color: #245750; display: block; margin: 3px 0; }.ops-timeline p { line-height: 1.6; margin: 0; }
+  .ops-facts { display: grid; gap: 11px; grid-template-columns: 1fr 1fr; margin: 0; }.ops-facts div { min-width: 0; }.ops-facts dt { color: #73817f; font-size: 12px; }.ops-facts dd { margin: 3px 0 0; overflow-wrap: anywhere; }
+  .ops-images { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); }.ops-image { background: #f1f5f3; border: 1px solid #d8e4e0; border-radius: 4px; display: block; padding: 5px; }.ops-image img { display: block; height: 160px; object-fit: contain; width: 100%; }.ops-image-name { color: #52635f; display: block; font-size: 11px; overflow-wrap: anywhere; padding: 5px 2px 1px; }.ops-empty { color: #71817e; margin: 0; }
+  @media (max-width: 800px) { .ops-columns { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 600px) { .ops-shell { margin: 0 12px; padding: 18px 0 88px; }.ops-case-head { padding: 14px; }.ops-case-head h1 { font-size: 20px; }.ops-section { padding: 13px; }.ops-facts { grid-template-columns: 1fr 1fr; } }
+</style>
+<div class="ops-shell">
+  <div class="ops-actions"><a class="ops-button secondary" href="{{ url_for('disaster_operations') }}">一覧に戻る</a><a class="ops-button" href="{{ url_for('disaster_operation_new') }}">受付を登録</a></div>
+  <header class="ops-case-head">
+    <p class="ops-case-meta">{{ case.id }}　/　受付時刻 {{ case.received_at }}</p>
+    <h1>{{ case.title }}</h1>
+    {% set priority_class = {'緊急': 'priority-emergency', '高': 'priority-high', '中': 'priority-medium', '低': 'priority-low'}.get(case.priority, 'priority-low') %}
+    {% set status_class = {'未対応': 'status-open', '対応中': 'status-working', '現地確認中': 'status-onsite', '完了': 'status-done'}.get(case.status, 'status-open') %}
+    <div class="ops-badges"><span class="ops-pill {{ priority_class }}">{{ case.priority }}</span><span class="ops-pill source-label">{{ case.reporter_type }}</span><span class="ops-pill method-label">{{ case.source }}</span><span class="ops-pill {{ status_class }}">{{ case.status }}</span></div>
+  </header>
+  <div class="ops-columns">
+    <div>
+      <section class="ops-section"><h2>受付内容</h2><p class="ops-details">{{ case.details or '受付内容はありません。' }}</p></section>
+      <section class="ops-section"><h2>住民とのやりとり・受付メモ</h2>
+        {% if case.messages %}{% for message in case.messages if message is mapping %}<article class="ops-message"><p class="ops-message-meta">{{ message.get('time', '時刻不明') }}　/　{{ message.get('sender', '記録者不明') }}</p><p>{{ message.get('content', '') }}</p></article>{% endfor %}{% else %}<p class="ops-empty">メッセージはありません。</p>{% endif %}
+      </section>
+      <section class="ops-section"><h2>対応履歴</h2>
+        {% if case.timeline %}<ol class="ops-timeline">{% for event in case.timeline if event is mapping %}<li><time>{{ event.get('time', '時刻不明') }}</time><strong>{{ event.get('label', '履歴') }}</strong><p>{{ event.get('detail', '') }}</p></li>{% endfor %}</ol>{% else %}<p class="ops-empty">対応履歴はありません。</p>{% endif %}
+      </section>
+    </div>
+    <aside>
+      <section class="ops-section"><h2>状況</h2><dl class="ops-facts"><div><dt>危険の種類</dt><dd>{{ case.risk }}</dd></div><div><dt>報告元</dt><dd>{{ case.reporter_type }}</dd></div><div><dt>場所</dt><dd>{{ case.location }}</dd></div><div><dt>担当者・通報者</dt><dd>{{ case.reporter or '匿名' }}</dd></div><div><dt>受付方法</dt><dd>{{ case.source }}</dd></div><div><dt>受付番号</dt><dd>{{ case.id }}</dd></div></dl></section>
+      <section class="ops-section"><h2>現場画像（{{ case.attachments|length }}枚）</h2>
+        {% if case.attachments %}<div class="ops-images">{% for attachment in case.attachments %}<a class="ops-image" href="{{ url_for('disaster_operation_image', filename=attachment.filename) }}" target="_blank" rel="noopener"><img src="{{ url_for('disaster_operation_image', filename=attachment.filename) }}" alt="{{ attachment.original_name or '現場画像' }}"><span class="ops-image-name">{{ attachment.original_name or '現場画像' }}</span></a>{% endfor %}</div>{% else %}<p class="ops-empty">画像の添付はありません。</p>{% endif %}
+      </section>
+    </aside>
+  </div>
+</div>
+{% endblock %}
